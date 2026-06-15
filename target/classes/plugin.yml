@@ -1,0 +1,24 @@
+name: DzusillCore
+version: '1.0.0'
+main: me.dzusill.core.example.ExamplePlugin
+api-version: '1.21'
+description: Reusable Paper plugin template framework
+authors: [dzusill]
+softdepend: [Vault, PlaceholderAPI, Essentials]
+
+# Commands are registered dynamically at runtime through the command framework
+# (CommandRegistry uses Paper's CommandMap), so they do not need to be declared here.
+
+permissions:
+  core.admin:
+    description: Grants access to all DzusillCore administration commands
+    default: op
+  core.reload:
+    description: Allows reloading the plugin configuration
+    default: op
+  core.heal:
+    description: Allows use of the example /heal command
+    default: op
+  core.shop:
+    description: Allows use of the example /shop command
+    default: true

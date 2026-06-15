@@ -1,0 +1,17 @@
+# ============================================================
+#  DzusillCore - user-facing messages (MiniMessage format)
+#  <prefix> is replaced by the prefix defined below.
+#  Placeholders: %name%, %target%, %usage% ... or positional {0}, {1}
+# ============================================================
+
+prefix: "<gray>[<aqua>Core</aqua>]</gray> "
+
+no-permission: "<prefix><red>You do not have permission to do that."
+players-only: "<prefix><red>Only players can use this command."
+console-only: "<prefix><red>This command can only be used from the console."
+unknown-command: "<prefix><red>Unknown subcommand. <gray>Use %usage%"
+invalid-usage: "<prefix><yellow>Usage: <gray>%usage%"
+invalid-number: "<prefix><red>'%input%' is not a valid number."
+player-not-found: "<prefix><red>Player '%name%' was not found."
+reload-success: "<prefix><green>Configuration reloaded."
+reload-failed: "<prefix><red>Reload failed, check the console for details."

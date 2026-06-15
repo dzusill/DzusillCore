@@ -1,0 +1,46 @@
+name: Validate Docs
+
+on:
+  push:
+    paths:
+      - 'docs/**'
+      - '.gitbook.yaml'
+  pull_request:
+    paths:
+      - 'docs/**'
+      - '.gitbook.yaml'
+
+jobs:
+  check-links:
+    name: Check markdown links
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check markdown links
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          use-quiet-mode: 'yes'
+          use-verbose-mode: 'yes'
+          folder-path: 'docs'
+          config-file: '.mlc-config.json'
+
+  validate-summary:
+    name: Verify all SUMMARY.md links exist
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check all files in SUMMARY.md exist
+        run: |
+          cd docs
+          missing=0
+          while IFS= read -r line; do
+            path=$(echo "$line" | grep -oP '\(([^)]+\.md)\)' | tr -d '()')
+            [ -z "$path" ] && continue
+            if [ ! -f "$path" ]; then
+              echo "MISSING: $path"
+              missing=$((missing + 1))
+            fi
+          done < SUMMARY.md
+          [ $missing -eq 0 ] && echo "All SUMMARY.md links resolve." || exit 1

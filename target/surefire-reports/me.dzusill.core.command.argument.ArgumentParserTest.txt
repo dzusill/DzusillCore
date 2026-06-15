@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: me.dzusill.core.command.argument.ArgumentParserTest
+-------------------------------------------------------------------------------
+Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.004 s -- in me.dzusill.core.command.argument.ArgumentParserTest

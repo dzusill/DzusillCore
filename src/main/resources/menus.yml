@@ -1,0 +1,24 @@
+# ============================================================
+#  DzusillCore - YAML-defined menu templates
+#  Loaded by YamlMenuTemplate. Define reusable layouts here so
+#  decorative items and fillers can change without recompiling.
+#
+#  material : any Bukkit Material name
+#  name/lore: MiniMessage format
+#  border   : true  -> filler applied to the outer ring only
+#             false -> filler applied to every empty slot
+#  slots    : inventory slot indices the item occupies
+# ============================================================
+
+example:
+  filler:
+    material: GRAY_STAINED_GLASS_PANE
+    name: " "
+  border: true
+  items:
+    title:
+      material: NETHER_STAR
+      name: "<aqua><bold>Example Menu"
+      lore:
+        - "<gray>A template-driven layout."
+      slots: [4]
