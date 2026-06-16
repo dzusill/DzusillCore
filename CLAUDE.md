@@ -44,6 +44,7 @@ Modules enable in array order and disable in reverse. Each module publishes serv
 | `menu` | `Menu`, `PaginatedMenu`, `MenuItem`, `MenuManager`, `template/*` |
 | `event` | `CoreListener`, `ListenerRegistry`, `@AutoRegister` |
 | `hook` | `PluginHook`, `HookManager`, Vault/PAPI/Essentials hooks |
+| `item` | `ItemDataStore` (key/value on an `ItemStack`): `PdcItemDataStore` (native, default) / `NbtApiItemDataStore` (raw NBT, legacy-format compat) |
 | `storage` | `DataStore`, `AbstractDataStore`, `YamlDataStore` |
 | `database` | `Database`, `MySqlDatabase`/`PostgreSqlDatabase`, `DatabaseManager`, `query/*`, `repository/*` |
 | `scheduler` | `SchedulerService` (sync/async/delayed/repeating + async-to-sync) |
@@ -85,6 +86,12 @@ MySQL and PostgreSQL via HikariCP. All `Database` methods are async (`Completabl
 ### Menus (GUI)
 
 Layouts can be defined in `menus.yml` via `YamlMenuTemplate` so server owners can restyle GUIs without recompiling. `MenuManager` tracks open inventories; `MenuListener` handles clicks. Register via `ListenerRegistry`.
+
+Clicks/drags are cancelled by default. Declare an editable slot with `inputSlot(int)` in `decorate()` (the player may place/take there), and override `onClose(InventoryCloseEvent)` to react when the menu closes (e.g. return a left-over input item). Persist item state via the `item` package's `ItemDataStore`.
+
+### Item data (`item`)
+
+`ItemDataStore` is the item-level analogue of the player-record `storage`/`database` layers — a tiny typed key/value API over an `ItemStack`. Default `PdcItemDataStore` (native PDC, plugin-namespaced keys, lower-cased). Use `NbtApiItemDataStore` only to read/preserve raw case-sensitive NBT tags from an existing item format; it needs `depend: [NBTAPI]` and cannot run under MockBukkit.
 
 ### Configs
 
