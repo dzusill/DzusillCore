@@ -1,9 +1,12 @@
 me/dzusill/core/database/DatabaseIntegrationTest$1.class
 me/dzusill/core/util/ItemBuilderTest.class
+me/dzusill/core/menu/MenuInputSlotTest$InputMenu.class
+me/dzusill/core/database/DatabaseTypeTest.class
+me/dzusill/core/menu/MenuInputSlotTest.class
 me/dzusill/core/menu/MenuTemplateTest.class
+me/dzusill/core/item/PdcItemDataStoreTest.class
 me/dzusill/core/cooldown/CooldownManagerTest.class
 me/dzusill/core/command/argument/ArgumentParserTest.class
-me/dzusill/core/database/DatabaseTypeTest.class
 me/dzusill/core/command/CommandRegistryTest.class
 me/dzusill/core/database/DatabaseIntegrationTest.class
 me/dzusill/core/database/query/SqlQueryTest.class

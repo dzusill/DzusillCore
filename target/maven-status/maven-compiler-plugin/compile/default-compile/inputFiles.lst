@@ -57,6 +57,9 @@
 /Users/adamkrampl/IdeaProjects/DzusillCore/src/main/java/me/dzusill/core/hook/PlaceholderApiHook.java
 /Users/adamkrampl/IdeaProjects/DzusillCore/src/main/java/me/dzusill/core/hook/PluginHook.java
 /Users/adamkrampl/IdeaProjects/DzusillCore/src/main/java/me/dzusill/core/hook/VaultHook.java
+/Users/adamkrampl/IdeaProjects/DzusillCore/src/main/java/me/dzusill/core/item/ItemDataStore.java
+/Users/adamkrampl/IdeaProjects/DzusillCore/src/main/java/me/dzusill/core/item/NbtApiItemDataStore.java
+/Users/adamkrampl/IdeaProjects/DzusillCore/src/main/java/me/dzusill/core/item/PdcItemDataStore.java
 /Users/adamkrampl/IdeaProjects/DzusillCore/src/main/java/me/dzusill/core/menu/Menu.java
 /Users/adamkrampl/IdeaProjects/DzusillCore/src/main/java/me/dzusill/core/menu/MenuItem.java
 /Users/adamkrampl/IdeaProjects/DzusillCore/src/main/java/me/dzusill/core/menu/MenuListener.java

@@ -10,6 +10,7 @@ me/dzusill/core/database/query/RowMapper.class
 me/dzusill/core/message/MessageService.class
 me/dzusill/core/example/module/FoundationModule.class
 me/dzusill/core/example/command/CoreAdminCommand$ReloadSubCommand.class
+me/dzusill/core/item/PdcItemDataStore.class
 me/dzusill/core/database/repository/Repository.class
 me/dzusill/core/menu/template/YamlMenuTemplate.class
 me/dzusill/core/command/argument/types/IntArgument.class
@@ -32,6 +33,7 @@ me/dzusill/core/message/Placeholder.class
 me/dzusill/core/hook/VaultHook.class
 me/dzusill/core/database/DatabaseCredentials.class
 me/dzusill/core/example/menu/ShopMenu.class
+me/dzusill/core/item/NbtApiItemDataStore.class
 me/dzusill/core/database/SchemaInitializer.class
 me/dzusill/core/command/SubCommand.class
 me/dzusill/core/database/PostgreSqlDatabase.class
@@ -73,6 +75,7 @@ me/dzusill/core/util/LocationUtils.class
 me/dzusill/core/CorePlugin.class
 me/dzusill/core/database/DatabaseException.class
 me/dzusill/core/menu/PaginatedMenu.class
+me/dzusill/core/item/ItemDataStore.class
 me/dzusill/core/menu/MenuListener.class
 me/dzusill/core/command/argument/ArgumentType.class
 me/dzusill/core/database/repository/AbstractSqlRepository.class

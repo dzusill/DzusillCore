@@ -5,5 +5,7 @@
 /Users/adamkrampl/IdeaProjects/DzusillCore/src/test/java/me/dzusill/core/database/DatabaseIntegrationTest.java
 /Users/adamkrampl/IdeaProjects/DzusillCore/src/test/java/me/dzusill/core/database/DatabaseTypeTest.java
 /Users/adamkrampl/IdeaProjects/DzusillCore/src/test/java/me/dzusill/core/database/query/SqlQueryTest.java
+/Users/adamkrampl/IdeaProjects/DzusillCore/src/test/java/me/dzusill/core/item/PdcItemDataStoreTest.java
+/Users/adamkrampl/IdeaProjects/DzusillCore/src/test/java/me/dzusill/core/menu/MenuInputSlotTest.java
 /Users/adamkrampl/IdeaProjects/DzusillCore/src/test/java/me/dzusill/core/menu/MenuTemplateTest.java
 /Users/adamkrampl/IdeaProjects/DzusillCore/src/test/java/me/dzusill/core/util/ItemBuilderTest.java

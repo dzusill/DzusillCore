@@ -34,6 +34,10 @@
             <id>jitpack.io</id>
             <url>https://jitpack.io</url>
         </repository>
+        <repository>
+            <id>codemc-repo</id>
+            <url>https://repo.codemc.io/repository/maven-public/</url>
+        </repository>
     </repositories>
 
     <dependencies>
@@ -67,6 +71,16 @@
                     <artifactId>bstats-bukkit</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+        <!-- Optional NBTAPI integration. Used only by me.dzusill.core.item.NbtApiItemDataStore;
+             plugins that don't store data on items via NBTAPI can ignore it. Compiled against the
+             standalone-plugin artifact (package de.tr7zw.nbtapi) so consumers declare
+             `depend: [NBTAPI]` in plugin.yml rather than shading the library. -->
+        <dependency>
+            <groupId>de.tr7zw</groupId>
+            <artifactId>item-nbt-api-plugin</artifactId>
+            <version>2.13.2</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>

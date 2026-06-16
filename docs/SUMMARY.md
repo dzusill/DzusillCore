@@ -50,6 +50,7 @@
 ## Storage
 
 * [File Storage](storage.md)
+* [Item Data](item-data.md)
 
 ## Database
 

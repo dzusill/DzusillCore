@@ -79,7 +79,8 @@ MenuItem.display(itemStack)
 MenuItem.of(itemStack, event -> { /* handle click */ })
 ```
 
-Events are **always cancelled** to prevent item theft.
+Clicks are **cancelled by default** to prevent item theft — except on declared
+[input slots](#input-slots) where the player is allowed to place and take items.
 
 ## Navigation
 
@@ -115,4 +116,42 @@ menus.closeAll();              // close all open menus
 
 ## MenuListener
 
-`MenuListener` is registered automatically by `MenuModule`. It intercepts all `InventoryClickEvent`s, checks if the top inventory's holder is a `Menu`, and delegates to `menu.handleClick(event)`. Drag events in menus are always cancelled.
+`MenuListener` is registered automatically by `MenuModule`. It intercepts all `InventoryClickEvent`s, checks if the top inventory's holder is a `Menu`, and delegates to `menu.handleClick(event)`. It also routes `InventoryCloseEvent` to [`onClose`](#close-handling). Drag events in menus are cancelled unless every affected slot is an [input slot](#input-slots).
+
+## Input slots
+
+By default a menu is read-only. To let the player place and take an item in a specific slot —
+an item-editor GUI, an enchanting/upgrade input, an anvil-style rename — declare it as an **input
+slot** from `decorate()`:
+
+```java
+@Override
+protected void decorate() {
+    setItem(11, MenuItem.display(new ItemBuilder(Material.ARROW).name("<gray>Put an item ->").build()));
+    inputSlot(12);   // slot 12 is freely editable by the player
+}
+```
+
+Clicks and drags into an input slot are not cancelled, so the item moves normally. Input slot
+declarations are cleared and re-applied on every `open()`/`refresh()`.
+
+## Close handling
+
+Override `onClose(InventoryCloseEvent)` to react when the menu is closed — most importantly to
+return an item left in an input slot so it is never lost:
+
+```java
+private static final int INPUT = 12;
+
+@Override
+protected void onClose(InventoryCloseEvent event) {
+    ItemStack left = inventory.getItem(INPUT);
+    if (left == null || left.getType().isAir()) {
+        return;
+    }
+    inventory.setItem(INPUT, null);
+    Player player = context.player();
+    player.getInventory().addItem(left).values()
+            .forEach(overflow -> player.getWorld().dropItemNaturally(player.getLocation(), overflow));
+}
+```

@@ -5,13 +5,16 @@ import me.dzusill.core.menu.template.MenuTemplate;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Base class for all GUIs. Implements {@link InventoryHolder} so the central {@link MenuListener}
@@ -30,6 +33,7 @@ public abstract class Menu implements InventoryHolder {
     protected Inventory inventory;
 
     private final Map<Integer, MenuItem> items = new HashMap<>();
+    private final Set<Integer> inputSlots = new HashSet<>();
 
     protected Menu(CorePlugin plugin, PlayerMenuContext context) {
         this.plugin = plugin;
@@ -61,6 +65,7 @@ public abstract class Menu implements InventoryHolder {
     private void openInternal(boolean recordHistory) {
         this.inventory = Bukkit.createInventory(this, size(), title());
         this.items.clear();
+        this.inputSlots.clear();
 
         MenuTemplate template = template();
         if (template != null) {
@@ -116,6 +121,22 @@ public abstract class Menu implements InventoryHolder {
     }
 
     /**
+     * Marks a slot as a free-interaction "input" slot: clicks and drags into it are not cancelled,
+     * so the player can place and take an item (e.g. an item to be edited). Call from
+     * {@link #decorate()}; declarations are cleared and re-applied on every open/refresh.
+     */
+    protected void inputSlot(int slot) {
+        inputSlots.add(slot);
+    }
+
+    /**
+     * @return whether {@code slot} (a raw, top-inventory slot index) is an input slot
+     */
+    boolean isInputSlot(int slot) {
+        return inputSlots.contains(slot);
+    }
+
+    /**
      * Fills every currently-empty slot with a non-clickable filler item.
      */
     public void fillEmpty(ItemStack filler) {
@@ -133,15 +154,26 @@ public abstract class Menu implements InventoryHolder {
     }
 
     /**
-     * Dispatches a click within this menu to the clicked slot's handler. Always cancels the event
-     * to prevent item theft.
+     * Dispatches a click within this menu to the clicked slot's handler. Cancels the event to
+     * prevent item theft, except on declared {@link #inputSlot(int) input slots} where the player is
+     * allowed to place and take items.
      */
     void handleClick(InventoryClickEvent event) {
+        if (inputSlots.contains(event.getRawSlot())) {
+            return;
+        }
         event.setCancelled(true);
         MenuItem item = items.get(event.getRawSlot());
         if (item != null) {
             item.click(event);
         }
+    }
+
+    /**
+     * Invoked when this menu's inventory is closed. Override to react (e.g. return an item left in an
+     * input slot to the player). Default is a no-op.
+     */
+    protected void onClose(InventoryCloseEvent event) {
     }
 
     public PlayerMenuContext context() {
