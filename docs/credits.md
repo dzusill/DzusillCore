@@ -27,7 +27,12 @@
 
 ## License
 
-> _License to be defined by the project author. Replace this section with your chosen license (e.g. MIT, Apache-2.0, GPL-3.0)._
+DzusillCore is licensed under the **Apache License, Version 2.0**. See [LICENSE](../LICENSE)
+and [NOTICE](../NOTICE) at the repository root.
+
+In short: free to use, modify, and redistribute (including commercially), as long as you keep
+the copyright/license notices and mark any files you change. It does not let a fork drop the
+original attribution and present the work as fully its own.
 
 ---
 
