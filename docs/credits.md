@@ -33,4 +33,4 @@
 
 ## Contributing
 
-Contributions are welcome. Open an issue or pull request on [GitHub](https://github.com/kavicka/IdeaProjects).
+Contributions are welcome. Open an issue or pull request on [GitHub](https://github.com/kavicka/DzusillCore).
