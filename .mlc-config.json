@@ -1,15 +1,8 @@
 {
   "ignorePatterns": [
     { "pattern": "^http://localhost" },
-    { "pattern": "^http://127\\.0\\.0\\.1" }
-  ],
-  "httpHeaders": [
-    {
-      "urls": ["https://dev.mysql.com"],
-      "headers": {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
-      }
-    }
+    { "pattern": "^http://127\\.0\\.0\\.1" },
+    { "pattern": "^https://dev\\.mysql\\.com" }
   ],
   "retryOn429": true,
   "retryCount": 2,
