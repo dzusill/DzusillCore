@@ -3,8 +3,10 @@ package me.dzusill.core.message;
 import me.dzusill.core.config.Config;
 import me.dzusill.core.service.Reloadable;
 import me.dzusill.core.service.Service;
+import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
 
@@ -15,10 +17,18 @@ import java.util.List;
  * Resolves and sends user-facing messages defined in {@code messages.yml}, parsed with
  * Adventure's MiniMessage. Centralizes prefix handling, placeholder substitution and the
  * single/list distinction so call sites never touch raw color codes or component building.
+ *
+ * <p>{@code CommandSender#sendMessage(Component)} is a Paper-only overload, so it's never called
+ * directly here. On Paper, the live sender object implements Adventure's {@link Audience} (even
+ * though our compile-time {@code CommandSender} type, from Spigot API, doesn't expose that), so
+ * the {@code instanceof} check below is true and gets native Component rendering. On plain
+ * Spigot/CraftBukkit it's false, and we fall back to a legacy section-sign string, which every
+ * Bukkit implementation has supported since {@code sendMessage(String)} existed.</p>
  */
 public final class MessageService implements Service, Reloadable {
 
     private static final MiniMessage MINI = MiniMessage.miniMessage();
+    private static final LegacyComponentSerializer LEGACY_SECTION = LegacyComponentSerializer.legacySection();
     private static final String PREFIX_KEY = "prefix";
     private static final String PREFIX_TOKEN = "<prefix>";
 
@@ -66,9 +76,9 @@ public final class MessageService implements Service, Reloadable {
      */
     public void send(CommandSender recipient, String key, Placeholder placeholder) {
         if (config.isList(key)) {
-            getList(key, placeholder).forEach(recipient::sendMessage);
+            getList(key, placeholder).forEach(line -> sendComponent(recipient, line));
         } else {
-            recipient.sendMessage(get(key, placeholder));
+            sendComponent(recipient, get(key, placeholder));
         }
     }
 
@@ -80,7 +90,21 @@ public final class MessageService implements Service, Reloadable {
      * Parses and sends an ad-hoc MiniMessage string (not backed by a config key).
      */
     public void sendRaw(CommandSender recipient, String miniMessage, Placeholder placeholder) {
-        recipient.sendMessage(render(miniMessage, placeholder));
+        sendComponent(recipient, render(miniMessage, placeholder));
+    }
+
+    /**
+     * Sends an already-built component, cross-version safe. The one sanctioned way to send a raw
+     * {@link Component} outside this service — call sites should never call
+     * {@code CommandSender#sendMessage(Component)} directly, since that overload is Paper-only
+     * and won't even compile against plain Spigot's API.
+     */
+    public void sendComponent(CommandSender recipient, Component component) {
+        if (recipient instanceof Audience audience) {
+            audience.sendMessage(component);
+        } else {
+            recipient.sendMessage(LEGACY_SECTION.serialize(component));
+        }
     }
 
     /**

@@ -1,4 +1,5 @@
 /Users/adamkrampl/IdeaProjects/DzusillCore/src/test/java/me/dzusill/core/command/CommandRegistryTest.java
+/Users/adamkrampl/IdeaProjects/DzusillCore/src/test/java/me/dzusill/core/command/CoreCommandTest.java
 /Users/adamkrampl/IdeaProjects/DzusillCore/src/test/java/me/dzusill/core/command/argument/ArgumentParserTest.java
 /Users/adamkrampl/IdeaProjects/DzusillCore/src/test/java/me/dzusill/core/config/ConfigSyncTest.java
 /Users/adamkrampl/IdeaProjects/DzusillCore/src/test/java/me/dzusill/core/cooldown/CooldownManagerTest.java
@@ -6,6 +7,13 @@
 /Users/adamkrampl/IdeaProjects/DzusillCore/src/test/java/me/dzusill/core/database/DatabaseTypeTest.java
 /Users/adamkrampl/IdeaProjects/DzusillCore/src/test/java/me/dzusill/core/database/query/SqlQueryTest.java
 /Users/adamkrampl/IdeaProjects/DzusillCore/src/test/java/me/dzusill/core/item/PdcItemDataStoreTest.java
+/Users/adamkrampl/IdeaProjects/DzusillCore/src/test/java/me/dzusill/core/menu/MenuButtonTest.java
 /Users/adamkrampl/IdeaProjects/DzusillCore/src/test/java/me/dzusill/core/menu/MenuInputSlotTest.java
+/Users/adamkrampl/IdeaProjects/DzusillCore/src/test/java/me/dzusill/core/menu/MenuMetaTest.java
+/Users/adamkrampl/IdeaProjects/DzusillCore/src/test/java/me/dzusill/core/menu/MenuRegistryTest.java
 /Users/adamkrampl/IdeaProjects/DzusillCore/src/test/java/me/dzusill/core/menu/MenuTemplateTest.java
+/Users/adamkrampl/IdeaProjects/DzusillCore/src/test/java/me/dzusill/core/nms/MinecraftVersionTest.java
+/Users/adamkrampl/IdeaProjects/DzusillCore/src/test/java/me/dzusill/core/nms/NmsAdaptersTest.java
+/Users/adamkrampl/IdeaProjects/DzusillCore/src/test/java/me/dzusill/core/nms/NmsModuleTest.java
+/Users/adamkrampl/IdeaProjects/DzusillCore/src/test/java/me/dzusill/core/nms/VersionDetectorTest.java
 /Users/adamkrampl/IdeaProjects/DzusillCore/src/test/java/me/dzusill/core/util/ItemBuilderTest.java

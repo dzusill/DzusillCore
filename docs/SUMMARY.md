@@ -35,6 +35,7 @@
 ## GUIs
 
 * [Overview](guis/overview.md)
+* [Menu Registry](guis/registry.md)
 * [Templates](guis/templates.md)
 * [Pagination](guis/pagination.md)
 * [Examples](guis/examples.md)
@@ -46,6 +47,13 @@
 ## Integrations
 
 * [Hooks](integrations/hooks.md)
+
+## NMS & Multi-Version
+
+* [Overview](nms/overview.md)
+* [Version Detection](nms/version-detection.md)
+* [Adapters](nms/adapters.md)
+* [Extending for Forks](nms/extending.md)
 
 ## Storage
 

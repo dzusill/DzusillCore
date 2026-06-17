@@ -9,11 +9,11 @@
 
 [size=4][b]What is DzusillCore?[/b][/size]
 
-DzusillCore is a reusable Paper plugin [b]framework[/b] — not a plugin you put in your [i]plugins/[/i] folder, but a solid foundation you build your own plugin on top of. Think of it as a starter kit that already solved the stuff every plugin needs: a module system, a command framework, a GUI framework, configs that don't wipe your comments, optional hooks into Vault/PlaceholderAPI/EssentialsX, and a database layer — all wired together and already tested.
+DzusillCore is a reusable Spigot/Paper plugin [b]framework[/b] — not a plugin you put in your [i]plugins/[/i] folder, but a solid foundation you build your own plugin on top of. Think of it as a starter kit that already solved the stuff every plugin needs: a module system, a command framework, a GUI framework, configs that don't wipe your comments, optional hooks into Vault/PlaceholderAPI/EssentialsX, a database layer, and a full NMS multi-version abstraction layer — all wired together and already tested.
 
 Clone it, delete the example plugin it ships with, and start writing the logic that's actually unique to your idea instead of re-inventing argument parsing for the tenth time.
 
-[i]dStattrack[/i] (our item-stat-tracking plugin) is built entirely on this framework — it's not a toy, it's the real foundation behind a real, working plugin.
+[i]dStattrack[/i] and [i]bLottery[/i] are built entirely on this framework — it's not a toy, it's the real foundation behind real, working plugins.
 
 [center][color=#777777]▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬[/color][/center]
 
@@ -26,25 +26,50 @@ Clone it, delete the example plugin it ships with, and start writing the logic t
 [*][b]MiniMessage everywhere[/b] — [b]MessageService[/b] handles your [i]messages.yml[/i], prefixes and placeholders so you never touch a raw color code.
 [*][b]Configs that respect your edits[/b] — [b]Config[/b]/[b]ConfigManager[/b] preserve comments and only add missing keys on update; they never silently overwrite a value you changed.
 [*][b]Optional integrations done right[/b] — [b]HookManager[/b] only loads a hook's classes once it confirms the target plugin (Vault, PlaceholderAPI, EssentialsX...) is actually installed, so a missing soft-dependency degrades gracefully instead of crashing your server.
+[*][b]NMS multi-version abstraction[/b] — the [b]me.dzusill.core.nms[/b] package provides a clean version adapter layer for the entire 1.16.5–1.21.x range. [b]VersionDetector[/b] auto-detects the running server (robust across the 1.17 NMS package move and the 1.20.5 Paper Mojang-mapping change). [b]NmsAdapters[/b] lazily instantiates only the adapter matching the running version — other versions' classes never link at all. [b]NmsAdapter[/b] is the stable interface your code targets; the framework ships [b]ReflectiveNmsAdapter[/b] (no server jar, no BuildTools) for the full range. Forks needing true NMS can register a mapped per-version override.
+[*][b]Cross-version player heads[/b] — [b]ItemBuilder.head(base64)[/b] works across the full range automatically. On Spigot/Paper 1.18.1+ it uses the stable Bukkit [b]PlayerProfile[/b] API via the [b]SkullMeta[/b] interface handle (bypassing Paper's module access restrictions on CraftBukkit internals). On 1.16.5–1.17.x it falls back to [b]GameProfile[/b] field reflection with a [b]ResolvableProfile[/b] coercion shim for Paper 1.20.5+. You just call [b]ItemBuilder.head(base64)[/b] and it works — on every version.
 [*][b]Item data storage[/b] — a tiny typed key/value API over an [b]ItemStack[/b], with a native PDC implementation (default, fully testable) or an NBTAPI implementation for legacy/raw NBT formats.
 [*][b]SQL when you need it[/b] — MySQL/PostgreSQL through HikariCP, async by default, with a repository pattern ([b]AbstractSqlRepository[/b]) for typed models. Fully optional — your plugin works fine with it disabled.
-[*][b]The little things[/b] — [b]ItemBuilder[/b] (incl. custom player heads from a texture string), [b]SchedulerService[/b], a generic [b]CooldownManager[/b], and assorted utils for locations, time and numbers.
+[*][b]The little things[/b] — [b]SchedulerService[/b], a generic [b]CooldownManager[/b], and assorted utils for locations, time and numbers.
 [*][b]Actually tested[/b] — the whole framework ships with a MockBukkit + JUnit 5 test suite, so you're not building on top of unverified guesses.
 [/list]
 
 [center][color=#777777]▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬[/color][/center]
 
+[size=4][b]NMS multi-version support in detail[/b][/size]
+
+Supporting multiple Minecraft versions in a single JAR without separate server jars or BuildTools is one of the hardest things to get right in plugin development. DzusillCore solves it with a clean adapter pattern:
+
+[list]
+[*][b]One interface, many versions[/b] — all NMS-dependent code goes through [b]NmsAdapter[/b]. Your feature module never imports a version-specific class.
+[*][b]Auto-detection, three fallbacks[/b] — [b]VersionDetector[/b] tries [b]Server#getMinecraftVersion()[/b] (Paper fast path), then parses [b]Bukkit.getBukkitVersion()[/b], then reads the CraftBukkit package suffix. The vX_Y_RZ suffix disappearing on 1.20.5+ Paper is handled automatically.
+[*][b]Lazy loading (like HookManager)[/b] — the factory for each adapter version is only called when that version is the one actually running. A 1.16-specific adapter class is never loaded on a 1.21 server.
+[*][b]Capability gating[/b] — always check [b]adapter.supports(NmsFeature.X)[/b] before calling a version-sensitive method. A graceful no-op fallback activates if nothing matched.
+[*][b]Breakpoints handled[/b]: 1.17 (NMS package move) · 1.18.1 (Bukkit PlayerProfile API) · 1.20.5 (Mojang mapping, ResolvableProfile) · 1.21.4 (Paper module access restrictions on CraftBukkit internals)
+[/list]
+
+[code=java]// In any module that runs after NmsModule:
+NmsAdapter nms = service(NmsAdapter.class);
+if (nms.supports(NmsFeature.PLAYER_PING)) {
+    int ping = nms.getPing(player);
+}
+
+// Heads just work — no version check needed:
+ItemStack head = new ItemBuilder(Material.PLAYER_HEAD).head(base64Texture).build();[/code]
+
+[center][color=#777777]▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬[/color][/center]
+
 [size=4][b]Why bother?[/b][/size]
 
-Because every plugin starts the same way: write a command parser, write a GUI click handler, write a config loader, hope Vault is installed and pray your plugin doesn't crash if it's not. DzusillCore means you write that exactly once — here — and every plugin you build afterwards starts from "the boring part is already done."
+Because every plugin starts the same way: write a command parser, write a GUI click handler, write a config loader, hope Vault is installed and pray your plugin doesn't crash if it's not — then spend a week debugging why your player head textures crash on a specific Paper build. DzusillCore means you write that exactly once — here — and every plugin you build afterwards starts from "the boring part is already done, and it works on 1.16.5 through 1.21.4."
 
 [center][color=#777777]▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬[/color][/center]
 
 [size=4][b]Requirements[/b][/size]
 
 [list]
-[*][b]Paper 1.21+[/b] (or a fork of it)
-[*][b]Java 21[/b]
+[*][b]Spigot or Paper 1.16.5–1.21.x[/b]
+[*][b]Java 17+[/b] (Java 21 recommended)
 [*][b]Maven[/b]
 [/list]
 

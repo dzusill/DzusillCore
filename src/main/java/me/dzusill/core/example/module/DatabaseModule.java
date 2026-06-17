@@ -4,7 +4,10 @@ import me.dzusill.core.CorePlugin;
 import me.dzusill.core.database.DatabaseConfig;
 import me.dzusill.core.database.DatabaseManager;
 import me.dzusill.core.module.AbstractModule;
-import me.dzusill.core.scheduler.SchedulerService;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Starts the database subsystem and publishes the {@link DatabaseManager}. The manager honors the
@@ -13,6 +16,7 @@ import me.dzusill.core.scheduler.SchedulerService;
  */
 public final class DatabaseModule extends AbstractModule {
 
+    private ExecutorService dbExecutor;
     private DatabaseManager databaseManager;
 
     public DatabaseModule(CorePlugin plugin) {
@@ -26,8 +30,18 @@ public final class DatabaseModule extends AbstractModule {
 
     @Override
     public void onEnable() {
-        SchedulerService scheduler = service(SchedulerService.class);
-        this.databaseManager = new DatabaseManager(plugin, new DatabaseConfig(plugin), scheduler.asyncExecutor());
+        AtomicInteger count = new AtomicInteger();
+        // Must use a plain Java thread pool, not SchedulerService.asyncExecutor() (Bukkit
+        // scheduler). SchemaInitializer calls CompletableFuture.join() on the main thread;
+        // Bukkit's scheduler only dispatches after the tick loop starts, which is after all
+        // onEnable() calls complete — deadlock if used here.
+        this.dbExecutor = Executors.newCachedThreadPool(r -> {
+            Thread t = new Thread(r, plugin.getName() + "-db-" + count.getAndIncrement());
+            t.setDaemon(true);
+            return t;
+        });
+
+        this.databaseManager = new DatabaseManager(plugin, new DatabaseConfig(plugin), dbExecutor);
         databaseManager.start();
         provide(DatabaseManager.class, databaseManager);
     }
@@ -36,6 +50,9 @@ public final class DatabaseModule extends AbstractModule {
     public void onDisable() {
         if (databaseManager != null) {
             databaseManager.close();
+        }
+        if (dbExecutor != null) {
+            dbExecutor.shutdown();
         }
     }
 }

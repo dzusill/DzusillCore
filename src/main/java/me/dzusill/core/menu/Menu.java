@@ -1,9 +1,13 @@
 package me.dzusill.core.menu;
 
 import me.dzusill.core.CorePlugin;
+import me.dzusill.core.menu.meta.MenuMeta;
 import me.dzusill.core.menu.template.MenuTemplate;
+import me.dzusill.core.util.ColorUtils;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
@@ -21,30 +25,73 @@ import java.util.Set;
  * can recover the owning {@code Menu} from any inventory and route clicks back to it, without a
  * separate registry.
  *
- * <p>Subclasses declare {@link #title()} and {@link #size()} and place their content in
- * {@link #decorate()} using {@link #set} / {@link #setItem}. A reusable {@link MenuTemplate}
- * (returned from {@link #template()}) is applied before {@code decorate()}, so common layouts
- * (borders, fillers, close buttons) are not repeated in every menu.</p>
+ * <p>Subclasses declare their title and size either by annotating the class with
+ * {@link MenuMeta} or by overriding {@link #title()} / {@link #size()}, then place content in
+ * {@link #decorate()} using the fluent {@link #button(int)} API (permission-aware) or the lower
+ * level {@link #set} / {@link #setItem}. A reusable {@link MenuTemplate} (returned from
+ * {@link #template()}) is applied before {@code decorate()}, so common layouts (borders, fillers,
+ * close buttons) are not repeated in every menu.</p>
  */
 public abstract class Menu implements InventoryHolder {
+
+    private static final LegacyComponentSerializer LEGACY_SECTION = LegacyComponentSerializer.legacySection();
 
     protected final CorePlugin plugin;
     protected final PlayerMenuContext context;
     protected Inventory inventory;
 
     private final Map<Integer, MenuItem> items = new HashMap<>();
+    private final Map<Integer, MenuButton> buttons = new HashMap<>();
     private final Set<Integer> inputSlots = new HashSet<>();
+
+    private final String metaTitle;
+    private final int metaSize;
+    private final String permission;
 
     protected Menu(CorePlugin plugin, PlayerMenuContext context) {
         this.plugin = plugin;
         this.context = context;
+        MenuMeta meta = getClass().getAnnotation(MenuMeta.class);
+        if (meta != null) {
+            this.metaTitle = meta.title();
+            this.metaSize = meta.size();
+            this.permission = meta.permission();
+        } else {
+            this.metaTitle = null;
+            this.metaSize = -1;
+            this.permission = "";
+        }
     }
 
-    /** @return the inventory title */
-    public abstract Component title();
+    /**
+     * @return the inventory title, taken from {@link MenuMeta#title()} unless overridden
+     * @throws IllegalStateException if the menu is neither annotated nor overrides this method
+     */
+    public Component title() {
+        if (metaTitle == null) {
+            throw new IllegalStateException(getClass().getName()
+                    + " must be annotated with @MenuMeta or override title()");
+        }
+        return ColorUtils.parse(metaTitle);
+    }
 
-    /** @return the inventory size in slots (a multiple of 9) */
-    public abstract int size();
+    /**
+     * @return the inventory size in slots (a multiple of 9), from {@link MenuMeta#size()} unless
+     *         overridden
+     * @throws IllegalStateException if the menu is neither annotated nor overrides this method
+     */
+    public int size() {
+        if (metaSize < 0) {
+            throw new IllegalStateException(getClass().getName()
+                    + " must be annotated with @MenuMeta or override size()");
+        }
+        return metaSize;
+    }
+
+    /** @return the permission required to open through the registry; empty means no check */
+    public String permission() {
+        return permission;
+    }
 
     /** Places this menu's content. Called after the template is applied. */
     protected abstract void decorate();
@@ -63,8 +110,11 @@ public abstract class Menu implements InventoryHolder {
     }
 
     private void openInternal(boolean recordHistory) {
-        this.inventory = Bukkit.createInventory(this, size(), title());
+        // Bukkit.createInventory(InventoryHolder, int, Component) is a Paper-only overload;
+        // serialize to a legacy section-sign string so this works on plain Spigot/CraftBukkit too.
+        this.inventory = Bukkit.createInventory(this, size(), LEGACY_SECTION.serialize(title()));
         this.items.clear();
+        this.buttons.clear();
         this.inputSlots.clear();
 
         MenuTemplate template = template();
@@ -121,6 +171,28 @@ public abstract class Menu implements InventoryHolder {
     }
 
     /**
+     * Begins declaring a permission-aware {@link MenuButton} at {@code slot}. Configure it fluently
+     * and finish with {@code add()}:
+     *
+     * <pre>{@code
+     * button(13).icon(icon).permission("core.shop.buy").onClick(event -> ...).add();
+     * }</pre>
+     *
+     * A button whose permission/visibility rule the viewer fails is hidden during render and its
+     * click is ignored, mirroring how the command tree hides and guards subcommands.
+     */
+    protected MenuButton.Builder button(int slot) {
+        return new MenuButton.Builder(this, slot);
+    }
+
+    void placeButton(int slot, MenuButton button) {
+        buttons.put(slot, button);
+        if (inventory != null && button.visibleTo(context.player())) {
+            inventory.setItem(slot, button.icon());
+        }
+    }
+
+    /**
      * Marks a slot as a free-interaction "input" slot: clicks and drags into it are not cancelled,
      * so the player can place and take an item (e.g. an item to be edited). Call from
      * {@link #decorate()}; declarations are cleared and re-applied on every open/refresh.
@@ -151,19 +223,37 @@ public abstract class Menu implements InventoryHolder {
         for (Map.Entry<Integer, MenuItem> entry : items.entrySet()) {
             inventory.setItem(entry.getKey(), entry.getValue().itemStack());
         }
+        Player player = context.player();
+        for (Map.Entry<Integer, MenuButton> entry : buttons.entrySet()) {
+            MenuButton button = entry.getValue();
+            if (button.visibleTo(player)) {
+                inventory.setItem(entry.getKey(), button.icon());
+            }
+        }
     }
 
     /**
      * Dispatches a click within this menu to the clicked slot's handler. Cancels the event to
      * prevent item theft, except on declared {@link #inputSlot(int) input slots} where the player is
-     * allowed to place and take items.
+     * allowed to place and take items. Clicks in the player's own (bottom) inventory are never the
+     * menu's business and are always left alone &mdash; otherwise picking an item up from your own
+     * inventory while a menu is open (the first half of dragging it into an input slot) would itself
+     * get cancelled, since its raw slot can never be a declared (top-inventory) input slot.
      */
     void handleClick(InventoryClickEvent event) {
-        if (inputSlots.contains(event.getRawSlot())) {
+        int slot = event.getRawSlot();
+        if (slot >= size() || inputSlots.contains(slot)) {
             return;
         }
         event.setCancelled(true);
-        MenuItem item = items.get(event.getRawSlot());
+        MenuButton button = buttons.get(slot);
+        if (button != null) {
+            if (event.getWhoClicked() instanceof Player player && button.canClick(player)) {
+                button.click(event);
+            }
+            return;
+        }
+        MenuItem item = items.get(slot);
         if (item != null) {
             item.click(event);
         }

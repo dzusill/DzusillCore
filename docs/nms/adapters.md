@@ -72,7 +72,12 @@ NMS calls can't execute under MockBukkit (no real server), so the unit tests cov
 
 | Version | Why it matters |
 |---|---|
-| 1.16.5 | Legacy relocated NMS package; `craftBukkitTag` present |
-| 1.18.2 | Post-1.17 `net.minecraft.*` layout |
+| 1.16.5 | Legacy relocated NMS package; `craftBukkitTag` present; `SkullTextures` uses GameProfile field reflection |
+| 1.18.2 | Post-1.17 `net.minecraft.*` layout; `SkullTextures` switches to `PlayerProfile` API (`setOwnerProfile`) |
 | 1.20.4 | Last version with the relocated CraftBukkit package |
 | 1.21.1 | Mojang-mapped, no relocation (`craftBukkitTag` empty) |
+| 1.21.4 | Paper tightened module access on `CraftMetaSkull` — `SkullTextures` must use `SkullMeta` interface handle, not `CraftMetaSkull` directly |
+
+### SkullTextures — what to check on each version
+
+Run `ItemBuilder.head("<some base64>")` (e.g. via a command that places a custom head) on each version above. The head should display the correct skin texture. If it shows a default Steve/Alex skin, `SkullTextures` strategy selection failed for that version.

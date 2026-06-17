@@ -7,6 +7,8 @@ import me.dzusill.core.CorePlugin;
 import me.dzusill.core.command.argument.Arguments;
 import me.dzusill.core.command.meta.CommandMeta;
 import me.dzusill.core.example.ExamplePlugin;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -53,8 +55,12 @@ class CoreCommandTest {
 
         assertDoesNotThrow(() -> player.performCommand("boom"));
 
-        String message = player.nextMessage();
+        // MessageService delivers via the Audience interface when the recipient supports it
+        // (true here, since MockBukkit's PlayerMock implements paper-api's Player), which is a
+        // separate recorded queue on PlayerMock from the plain nextMessage().
+        Component message = player.nextComponentMessage();
         assertNotNull(message);
-        assertTrue(message.contains("error"), "expected command-error message, got: " + message);
+        String plain = PlainTextComponentSerializer.plainText().serialize(message);
+        assertTrue(plain.contains("error"), "expected command-error message, got: " + plain);
     }
 }

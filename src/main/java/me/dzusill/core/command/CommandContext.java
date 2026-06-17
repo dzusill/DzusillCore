@@ -34,6 +34,10 @@ public final class CommandContext {
         return sender;
     }
 
+    public MessageService messages() {
+        return messages;
+    }
+
     public String label() {
         return label;
     }

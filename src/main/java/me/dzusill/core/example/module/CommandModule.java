@@ -6,7 +6,7 @@ import me.dzusill.core.config.ConfigManager;
 import me.dzusill.core.example.command.CoreAdminCommand;
 import me.dzusill.core.example.command.HealCommand;
 import me.dzusill.core.example.command.ShopCommand;
-import me.dzusill.core.menu.MenuManager;
+import me.dzusill.core.menu.MenuRegistry;
 import me.dzusill.core.message.MessageService;
 import me.dzusill.core.module.AbstractModule;
 
@@ -34,6 +34,6 @@ public final class CommandModule extends AbstractModule {
 
         commands.register(new CoreAdminCommand(service(ConfigManager.class), messages));
         commands.register(new HealCommand());
-        commands.register(new ShopCommand(plugin, service(MenuManager.class)));
+        commands.register(new ShopCommand(service(MenuRegistry.class)));
     }
 }

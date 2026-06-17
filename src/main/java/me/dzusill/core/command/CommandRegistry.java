@@ -8,11 +8,12 @@ import org.bukkit.command.CommandMap;
 import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Locale;
 
 /**
- * Registers {@link CoreCommand}s with the server at runtime through Paper's {@link CommandMap},
+ * Registers {@link CoreCommand}s with the server at runtime through Bukkit's {@link CommandMap},
  * so commands never need to be declared in {@code plugin.yml}. Each command is injected with its
  * plugin and {@link MessageService}, then wrapped in a lightweight {@link Command} bridge that
  * delegates execution and tab-completion back to the framework's dispatch.
@@ -27,8 +28,24 @@ public final class CommandRegistry implements Service {
     public CommandRegistry(CorePlugin plugin, MessageService messages) {
         this.plugin = plugin;
         this.messages = messages;
-        this.commandMap = plugin.getServer().getCommandMap();
+        this.commandMap = resolveCommandMap(plugin);
         this.fallbackPrefix = plugin.getName().toLowerCase(Locale.ROOT);
+    }
+
+    /**
+     * {@code Server#getCommandMap()} is a Paper-only convenience method, not part of plain
+     * Spigot/CraftBukkit's public API. The private {@code commandMap} field on the server
+     * implementation class has been stable since early Bukkit, so reflection works identically
+     * on every supported server implementation.
+     */
+    private static CommandMap resolveCommandMap(CorePlugin plugin) {
+        try {
+            Field field = plugin.getServer().getClass().getDeclaredField("commandMap");
+            field.setAccessible(true);
+            return (CommandMap) field.get(plugin.getServer());
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException("Could not resolve the server's CommandMap", e);
+        }
     }
 
     /**

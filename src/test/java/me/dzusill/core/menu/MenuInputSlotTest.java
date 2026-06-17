@@ -76,6 +76,17 @@ class MenuInputSlotTest {
     }
 
     @Test
+    void clickInPlayerInventoryIsNeverCancelled() {
+        InputMenu menu = openMenu();
+        InventoryClickEvent event = mock(InventoryClickEvent.class);
+        when(event.getRawSlot()).thenReturn(27); // first slot of the player's own (bottom) inventory
+
+        menu.handleClick(event);
+
+        verify(event, never()).setCancelled(anyBoolean());
+    }
+
+    @Test
     void listenerRoutesCloseToMenu() {
         InputMenu menu = openMenu();
         InventoryCloseEvent event = mock(InventoryCloseEvent.class);

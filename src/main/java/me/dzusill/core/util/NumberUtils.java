@@ -1,6 +1,7 @@
 package me.dzusill.core.util;
 
 import java.text.DecimalFormat;
+import java.util.Locale;
 import java.util.Optional;
 
 /**
@@ -37,6 +38,13 @@ public final class NumberUtils {
         } catch (NumberFormatException | NullPointerException ex) {
             return Optional.empty();
         }
+    }
+
+    /**
+     * Formats an integer with thousands separators (e.g. {@code 1234 -> "1,234"}).
+     */
+    public static String format(long value) {
+        return String.format(Locale.US, "%,d", value);
     }
 
     /**

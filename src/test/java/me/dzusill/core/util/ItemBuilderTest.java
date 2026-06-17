@@ -33,7 +33,7 @@ class ItemBuilderTest {
         assertEquals(Material.DIAMOND, item.getType());
         assertEquals(3, item.getAmount());
         assertTrue(item.getItemMeta().hasDisplayName());
-        assertEquals(2, item.getItemMeta().lore().size());
+        assertEquals(2, item.getItemMeta().getLore().size());
     }
 
     @Test
@@ -43,4 +43,9 @@ class ItemBuilderTest {
         assertTrue(item.getItemMeta().hasEnchants());
         assertTrue(item.getItemMeta().hasItemFlag(ItemFlag.HIDE_ENCHANTS));
     }
+
+    // No test for ItemBuilder.head()/skull(): SkullTextures reflects into the real CraftBukkit
+    // SkullMeta's private GameProfile field, which MockBukkit's SkullMetaMock doesn't have (it
+    // mocks Paper's PlayerProfile API instead). Texture rendering can only be verified manually
+    // on a real server - see the Part A multi-version smoke-test matrix in the project plan.
 }

@@ -1,9 +1,7 @@
 package me.dzusill.core.menu;
 
 import me.dzusill.core.service.Service;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.InventoryHolder;
 
 import java.util.Map;
 import java.util.UUID;
@@ -40,13 +38,45 @@ public final class MenuManager implements Service {
     }
 
     /**
+     * Refreshes every online player's currently open menu if it's an instance of
+     * {@code menuType}. For broadcasting a backend state change (e.g. a lottery draw completing)
+     * to everyone currently looking at a menu backed by that state, without each menu having to
+     * poll for changes itself.
+     */
+    public void refreshAll(Class<? extends Menu> menuType) {
+        for (PlayerMenuContext context : contexts.values()) {
+            Menu current = context.current();
+            if (menuType.isInstance(current)) {
+                current.refresh();
+            }
+        }
+    }
+
+    /**
+     * Closes every player's currently open menu if it's an instance of {@code menuType}.
+     * Use at state-transition points where showing stale UI would confuse the player.
+     */
+    public void closeAll(Class<? extends Menu> menuType) {
+        for (PlayerMenuContext context : contexts.values()) {
+            Menu current = context.current();
+            if (menuType.isInstance(current)) {
+                context.player().closeInventory();
+            }
+        }
+    }
+
+    /**
      * Closes every open framework menu. Safe to call from {@code onDisable}.
+     *
+     * <p>Deliberately goes through our own tracked {@link PlayerMenuContext#current()} rather
+     * than {@code Player#getOpenInventory()}: {@code InventoryView} is a class on older Bukkit
+     * and an interface on newer Bukkit, so code compiled against one shape can throw
+     * {@code IncompatibleClassChangeError} against a server running the other.</p>
      */
     public void closeAll() {
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            InventoryHolder holder = player.getOpenInventory().getTopInventory().getHolder();
-            if (holder instanceof Menu) {
-                player.closeInventory();
+        for (PlayerMenuContext context : contexts.values()) {
+            if (context.current() != null) {
+                context.player().closeInventory();
             }
         }
         contexts.clear();

@@ -29,9 +29,10 @@ public final class HealCommand extends CoreCommand {
         target.setHealth(maxHealth);
         target.setFoodLevel(20);
 
-        target.sendMessage(ColorUtils.parse("<green>You have been healed."));
+        context.messages().sendComponent(target, ColorUtils.parse("<green>You have been healed."));
         if (!target.equals(context.sender())) {
-            context.sender().sendMessage(ColorUtils.parse("<green>Healed <yellow>" + target.getName() + "</yellow>."));
+            context.messages().sendComponent(context.sender(),
+                    ColorUtils.parse("<green>Healed <yellow>" + target.getName() + "</yellow>."));
         }
     }
 }

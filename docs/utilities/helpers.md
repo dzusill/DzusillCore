@@ -26,16 +26,25 @@ ItemStack item = new ItemBuilder(Material.DIAMOND)
 | `amount(int)` | Stack size |
 | `glow()` | Enchantment glint without showing enchantment text |
 | `flags(ItemFlag...)` | Add item flags |
-| `skull(String base64)` | Apply a base64 texture to a `PLAYER_HEAD` item |
+| `ItemBuilder.head(String base64)` | **Static** — start a builder for a custom-textured `PLAYER_HEAD` |
+| `skull(String base64)` | Apply a base64 texture to a `PLAYER_HEAD` item (use after `new ItemBuilder(Material.PLAYER_HEAD)`) |
 | `pdc(key, type, value)` | Write a value to PersistentDataContainer |
 | `build()` | Returns the finished `ItemStack` |
 
 ```java
-// Custom head with texture
+// Custom head with texture — one-liner via the static head() factory
+ItemStack plus = ItemBuilder.head("eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly...")
+        .name("<green>Add")
+        .build();
+
+// Equivalent explicit form
 ItemStack head = new ItemBuilder(Material.PLAYER_HEAD)
-        .skull("eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly..."  )
+        .skull("eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly...")
         .name("<yellow>Custom Head")
         .build();
+
+// In a menu, as a button icon:
+// button(11).icon(ItemBuilder.head(HEAD_PLUS).name("<green>Add").build()).onClick(...).add();
 
 // PDC tag for identification
 NamespacedKey key = new NamespacedKey(plugin, "item-type");

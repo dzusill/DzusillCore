@@ -36,8 +36,13 @@ class MenuTemplateTest {
         PlayerMock player = server.addPlayer();
         MenuManager menus = plugin.services().get(MenuManager.class);
 
-        new ShopMenu(plugin, menus.context(player)).open();
-        Inventory inventory = player.getOpenInventory().getTopInventory();
+        ShopMenu menu = new ShopMenu(plugin, menus.context(player));
+        menu.open();
+        // Read the inventory straight off the Menu (InventoryHolder) rather than through
+        // Player#getOpenInventory(): InventoryView is a class on older Bukkit and an interface
+        // on newer Bukkit, so touching it directly is a cross-version landmine in tests that mix
+        // a MockBukkit line with a different-shaped Bukkit API on the classpath.
+        Inventory inventory = menu.getInventory();
 
         assertEquals(27, inventory.getSize());
         assertNotNull(inventory.getItem(0));

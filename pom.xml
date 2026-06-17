@@ -6,7 +6,7 @@
 
     <groupId>me.dzusill</groupId>
     <artifactId>DzusillCore</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <packaging>jar</packaging>
 
     <name>DzusillCore</name>
@@ -21,7 +21,7 @@
     </licenses>
 
     <properties>
-        <java.version>21</java.version>
+        <java.version>17</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -29,6 +29,18 @@
         <repository>
             <id>papermc-repo</id>
             <url>https://repo.papermc.io/repository/maven-public/</url>
+        </repository>
+        <repository>
+            <id>spigotmc-repo</id>
+            <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
+        </repository>
+        <repository>
+            <id>sonatype</id>
+            <url>https://oss.sonatype.org/content/groups/public/</url>
+        </repository>
+        <repository>
+            <id>minecraft-repo</id>
+            <url>https://libraries.minecraft.net/</url>
         </repository>
         <repository>
             <id>essentials-releases</id>
@@ -49,11 +61,63 @@
     </repositories>
 
     <dependencies>
+        <!-- Test-only, declared first on purpose: MockBukkit-v1.21 internally expects this exact
+             paper-api version's concrete classes (e.g. SimpleCommandMap's constructor shape). Our
+             own (real, nearer-by-declaration) spigot-api:1.16.5 below contains a same-named but
+             binary-incompatible class, and Maven puts dependencies on the classpath in roughly
+             declaration order - listing this one first makes it win for tests, while it never
+             reaches the main compile classpath since it's test-scoped. -->
         <dependency>
             <groupId>io.papermc.paper</groupId>
             <artifactId>paper-api</artifactId>
             <version>1.21.1-R0.1-SNAPSHOT</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Compiled against the lowest API surface in the supported range (Spigot, not Paper)
+             so we never accidentally call a method that only exists on newer/Paper-only API.
+             Cross-version rendering (Adventure on old Spigot) and skull textures are bridged
+             explicitly below (adventure-platform-bukkit, authlib) rather than relying on
+             Paper-only convenience methods. -->
+        <dependency>
+            <groupId>org.spigotmc</groupId>
+            <artifactId>spigot-api</artifactId>
+            <version>1.16.5-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
+        </dependency>
+
+        <!-- Used for the reflection-based cross-version skull/profile texture utility
+             (me.dzusill.core.util.SkullTextures); not provided by plain Spigot API. -->
+        <dependency>
+            <groupId>com.mojang</groupId>
+            <artifactId>authlib</artifactId>
+            <version>1.5.21</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- Adventure: shaded (not provided) because old Spigot/CraftBukkit servers don't ship
+             these classes at all. No platform/NMS-bridge module needed: MessageService picks
+             native Audience-based sending vs a legacy-string fallback itself at runtime (see its
+             class Javadoc), so we only need the core Component/MiniMessage/serializer jars. -->
+        <dependency>
+            <groupId>net.kyori</groupId>
+            <artifactId>adventure-api</artifactId>
+            <version>4.17.0</version>
+        </dependency>
+        <dependency>
+            <groupId>net.kyori</groupId>
+            <artifactId>adventure-text-minimessage</artifactId>
+            <version>4.17.0</version>
+        </dependency>
+        <dependency>
+            <groupId>net.kyori</groupId>
+            <artifactId>adventure-text-serializer-legacy</artifactId>
+            <version>4.17.0</version>
+        </dependency>
+        <dependency>
+            <groupId>net.kyori</groupId>
+            <artifactId>adventure-text-serializer-plain</artifactId>
+            <version>4.17.0</version>
         </dependency>
 
         <dependency>
@@ -61,6 +125,15 @@
             <artifactId>VaultAPI</artifactId>
             <version>1.7</version>
             <scope>provided</scope>
+            <exclusions>
+                <!-- VaultAPI transitively pulls an ancient org.bukkit:bukkit:1.13.1 jar that
+                     shadows newer classes from our own spigot-api dependency on the compile
+                     classpath; we already provide the real Bukkit API ourselves. -->
+                <exclusion>
+                    <groupId>org.bukkit</groupId>
+                    <artifactId>bukkit</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>me.clip</groupId>
@@ -171,6 +244,13 @@
                                     <pattern>com.zaxxer.hikari</pattern>
                                     <shadedPattern>me.dzusill.core.lib.hikari</shadedPattern>
                                 </relocation>
+                                <!-- Relocate Adventure (+ its examination-api/examination-string
+                                     transitive deps, also under net.kyori) to avoid clashing with
+                                     a different Adventure version another plugin/server bundles. -->
+                                <relocation>
+                                    <pattern>net.kyori</pattern>
+                                    <shadedPattern>me.dzusill.core.lib.kyori</shadedPattern>
+                                </relocation>
                             </relocations>
                         </configuration>
                     </execution>
@@ -187,6 +267,19 @@
                         --add-opens java.base/java.lang.reflect=ALL-UNNAMED
                         --add-opens java.base/java.lang.invoke=ALL-UNNAMED
                     </argLine>
+
+                    <!-- spigot-api:1.16.5 and MockBukkit's transitive paper-api:1.21.1 both
+                         define classes like InventoryView with incompatible shapes (class vs
+                         interface across versions). Having both on the same classpath at once
+                         crashes at runtime (IncompatibleClassChangeError) wherever MockBukkit's
+                         pre-compiled internals touch one of those classes. Tests only need ONE
+                         consistent Bukkit API surface to run against, so spigot-api is dropped
+                         from the test execution classpath; MockBukkit's own paper-api covers it.
+                         Main compile/package are unaffected - this only trims surefire's runtime
+                         classpath. -->
+                    <classpathDependencyExcludes>
+                        <classpathDependencyExclude>org.spigotmc:spigot-api</classpathDependencyExclude>
+                    </classpathDependencyExcludes>
                 </configuration>
             </plugin>
         </plugins>

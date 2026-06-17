@@ -121,7 +121,9 @@ public class Config extends YamlConfiguration {
 
     @Override
     public String saveToString() {
-        options().setHeader(Collections.emptyList());
+        // FileConfigurationOptions#setHeader(List<String>) was only added in newer Bukkit;
+        // header(String) is the signature available back on Spigot API 1.16.5 too.
+        options().header("");
         List<String> lines = new ArrayList<>(Arrays.asList(super.saveToString().split("\n", -1)));
         injectComments(lines);
         StringBuilder sb = new StringBuilder();

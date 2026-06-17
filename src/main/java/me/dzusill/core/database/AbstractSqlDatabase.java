@@ -54,6 +54,11 @@ public abstract class AbstractSqlDatabase implements Database {
         config.setDriverClassName(type.driverClassName());
         config.setMaximumPoolSize(credentials.maximumPoolSize());
         config.setConnectionTimeout(credentials.connectionTimeoutMs());
+        // Skip HikariCP's startup validation connection so new HikariDataSource() returns
+        // immediately without blocking the main thread on a remote TCP handshake. Connections
+        // are opened lazily on first use (always on the async executor, never on main thread).
+        config.setMinimumIdle(0);
+        config.setInitializationFailTimeout(0);
         for (Map.Entry<String, String> property : credentials.properties().entrySet()) {
             config.addDataSourceProperty(property.getKey(), property.getValue());
         }

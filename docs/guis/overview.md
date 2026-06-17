@@ -7,11 +7,59 @@ The GUI system is built on Bukkit's `InventoryHolder` pattern. Every menu holds 
 | Class | Role |
 |---|---|
 | `Menu` | Abstract base for all GUIs — title, size, items, template, click dispatch |
+| `@MenuMeta` | Class annotation declaring a menu's `title` / `size` / `permission` (like `@CommandMeta`) |
+| `MenuButton` | A permission-aware slot node: icon + click handler + permission + visibility predicate |
 | `PaginatedMenu` | Extends `Menu` with automatic page layout and navigation buttons |
 | `MenuItem` | An `ItemStack` paired with an optional click handler (`Consumer<InventoryClickEvent>`) |
 | `PlayerMenuContext` | Per-player object holding state, arbitrary data, and navigation history |
 | `MenuManager` | Service — manages `PlayerMenuContext` instances and closes menus on shutdown |
+| `MenuRegistry` | Service — registers menus by key and opens them by name (like `CommandRegistry`) |
+| `MenuFactory` | Functional interface that builds a `Menu` for a context (e.g. `ShopMenu::new`) |
 | `MenuListener` | Routes `InventoryClickEvent`/`InventoryDragEvent` to the correct `Menu` |
+
+## Declarative menus (the command-style API)
+
+A menu is declared the same way a command is: metadata in an annotation, content declared fluently.
+Annotate the class with `@MenuMeta` (so you no longer override `title()`/`size()`), then declare
+each slot with the fluent, permission-aware `button(int)` API inside `decorate()`:
+
+```java
+@MenuMeta(title = "<dark_purple>Example Shop", size = 27, permission = "core.shop")
+public final class ShopMenu extends Menu {
+
+    public ShopMenu(CorePlugin plugin, PlayerMenuContext context) {
+        super(plugin, context);
+    }
+
+    @Override
+    protected MenuTemplate template() {
+        return Templates.bordered();
+    }
+
+    @Override
+    protected void decorate() {
+        button(13)
+                .icon(new ItemBuilder(Material.DIAMOND).name("<aqua>Buy a diamond").build())
+                .onClick(event -> context.player().sendMessage(ColorUtils.parse("<green>Bought!")))
+                .add();
+
+        button(15)
+                .icon(new ItemBuilder(Material.CHEST).name("<gold>Restock").build())
+                .permission("core.shop.admin")   // hidden + click-guarded for players without it
+                .onClick(event -> restock())
+                .add();
+    }
+}
+```
+
+A button with a `permission` (or a `visibleIf` predicate) is **auto-hidden** during render for
+players who fail it, and its click is **guarded** even if somehow triggered — mirroring how the
+command tree hides subcommands in tab-complete and re-checks permission before running. Because a
+hidden button leaves its slot empty, put a [template](templates.md) filler underneath if your
+layout assumes a fixed grid.
+
+`@MenuMeta` is optional and additive: existing menus that override `title()`/`size()` and use
+`set(slot, MenuItem.of(...))` keep working unchanged.
 
 ## Creating a menu
 

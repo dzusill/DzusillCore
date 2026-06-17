@@ -57,7 +57,7 @@ public abstract class CorePlugin extends JavaPlugin {
     protected String[] banner() {
         return new String[]{
                 "",
-                "  " + getName() + " v" + getPluginMeta().getVersion(),
+                "  " + getName() + " v" + getDescription().getVersion(),
                 "  Powered by DzusillCore",
                 ""
         };

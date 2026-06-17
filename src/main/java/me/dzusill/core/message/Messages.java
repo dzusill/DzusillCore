@@ -17,6 +17,7 @@ public final class Messages {
     public static final String PLAYER_NOT_FOUND = "player-not-found";
     public static final String RELOAD_SUCCESS = "reload-success";
     public static final String RELOAD_FAILED = "reload-failed";
+    public static final String COMMAND_ERROR = "command-error";
 
     private Messages() {
     }
