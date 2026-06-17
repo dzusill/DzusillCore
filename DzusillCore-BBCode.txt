@@ -1,0 +1,63 @@
+[center][size=7][b]DzusillCore[/b][/size]
+[size=3]The framework that does the boring 80%, so you can write the fun 20%.[/size][/center]
+
+[center][color=#777777]▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬[/color][/center]
+
+[center][color=red][b]Developers only:[/b] this is a source-code framework/template, not a drop-in plugin. There is nothing to install on a server by itself — you clone the source and manually build your plugin on top of it in your IDE.[/color][/center]
+
+[center][color=#777777]▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬[/color][/center]
+
+[size=4][b]What is DzusillCore?[/b][/size]
+
+DzusillCore is a reusable Paper plugin [b]framework[/b] — not a plugin you put in your [i]plugins/[/i] folder, but a solid foundation you build your own plugin on top of. Think of it as a starter kit that already solved the stuff every plugin needs: a module system, a command framework, a GUI framework, configs that don't wipe your comments, optional hooks into Vault/PlaceholderAPI/EssentialsX, and a database layer — all wired together and already tested.
+
+Clone it, delete the example plugin it ships with, and start writing the logic that's actually unique to your idea instead of re-inventing argument parsing for the tenth time.
+
+[i]dStattrack[/i] (our item-stat-tracking plugin) is built entirely on this framework — it's not a toy, it's the real foundation behind a real, working plugin.
+
+[center][color=#777777]▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬[/color][/center]
+
+[size=4][b]What's inside[/b][/size]
+
+[list]
+[*][b]Plugin lifecycle[/b] — extend [b]CorePlugin[/b], return an ordered list of modules. Each module publishes services, the next module resolves them. No more giant static [i]Main.java[/i] god-object.
+[*][b]Commands, fully declarative[/b] — annotate a class with [b]@CommandMeta[/b], declare arguments in the constructor, done. Permission checks, player-only enforcement, argument parsing and tab-completion are all derived automatically. No [i]plugin.yml[/i] commands block needed.
+[*][b]GUIs, the same way[/b] — [b]@MenuMeta[/b] for title/size/permission, a fluent [b]button(slot).icon(...).permission(...).onClick(...)[/b] API for content. Buttons a player can't use are automatically hidden, not just blocked. Register menus once on [b]MenuRegistry[/b] and open them anywhere by key.
+[*][b]MiniMessage everywhere[/b] — [b]MessageService[/b] handles your [i]messages.yml[/i], prefixes and placeholders so you never touch a raw color code.
+[*][b]Configs that respect your edits[/b] — [b]Config[/b]/[b]ConfigManager[/b] preserve comments and only add missing keys on update; they never silently overwrite a value you changed.
+[*][b]Optional integrations done right[/b] — [b]HookManager[/b] only loads a hook's classes once it confirms the target plugin (Vault, PlaceholderAPI, EssentialsX...) is actually installed, so a missing soft-dependency degrades gracefully instead of crashing your server.
+[*][b]Item data storage[/b] — a tiny typed key/value API over an [b]ItemStack[/b], with a native PDC implementation (default, fully testable) or an NBTAPI implementation for legacy/raw NBT formats.
+[*][b]SQL when you need it[/b] — MySQL/PostgreSQL through HikariCP, async by default, with a repository pattern ([b]AbstractSqlRepository[/b]) for typed models. Fully optional — your plugin works fine with it disabled.
+[*][b]The little things[/b] — [b]ItemBuilder[/b] (incl. custom player heads from a texture string), [b]SchedulerService[/b], a generic [b]CooldownManager[/b], and assorted utils for locations, time and numbers.
+[*][b]Actually tested[/b] — the whole framework ships with a MockBukkit + JUnit 5 test suite, so you're not building on top of unverified guesses.
+[/list]
+
+[center][color=#777777]▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬[/color][/center]
+
+[size=4][b]Why bother?[/b][/size]
+
+Because every plugin starts the same way: write a command parser, write a GUI click handler, write a config loader, hope Vault is installed and pray your plugin doesn't crash if it's not. DzusillCore means you write that exactly once — here — and every plugin you build afterwards starts from "the boring part is already done."
+
+[center][color=#777777]▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬[/color][/center]
+
+[size=4][b]Requirements[/b][/size]
+
+[list]
+[*][b]Paper 1.21+[/b] (or a fork of it)
+[*][b]Java 21[/b]
+[*][b]Maven[/b]
+[/list]
+
+Vault, PlaceholderAPI and EssentialsX are all optional — the framework's hooks simply stay inactive if they're not installed.
+
+[center][color=#777777]▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬[/color][/center]
+
+[size=4][b]Full documentation[/b][/size]
+
+Every package, every pattern, every "how do I..." is written up properly on GitBook:
+
+[center][size=5][url]https://811-group.gitbook.io/dzusillcore-documentation[/url][/size][/center]
+
+[center][color=#777777]▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬[/color][/center]
+
+[center][size=2][i]Built once, reused everywhere. Happy building![/i][/size][/center]
