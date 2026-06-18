@@ -5,7 +5,8 @@
 ## Getting Started
 
 * [Requirements](getting-started/requirements.md)
-* [Installation](getting-started/installation.md)
+* [Installation (Template)](getting-started/installation.md)
+* [Installation (JitPack Dependency)](getting-started/as-dependency.md)
 * [Project Structure](getting-started/project-structure.md)
 * [Your First Plugin](getting-started/first-plugin.md)
 

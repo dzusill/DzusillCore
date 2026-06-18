@@ -1,5 +1,11 @@
 # Installation
 
+> **Two approaches available:**
+> - **Template (this page)** — clone the repo, rename, delete the example package. Best for new plugins.
+> - **[JitPack dependency](as-dependency.md)** — add DzusillCore as a Maven dependency. Best if you already have your own project structure.
+
+---
+
 ## 1. Create your project from the template
 
 On GitHub, click **Use this template → Create a new repository** to generate a fresh repo with all the framework files. Then clone your new repo locally:

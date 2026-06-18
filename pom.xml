@@ -252,7 +252,31 @@
                                     <shadedPattern>me.dzusill.core.lib.kyori</shadedPattern>
                                 </relocation>
                             </relocations>
+                            <filters>
+                                <filter>
+                                    <artifact>me.dzusill:DzusillCore</artifact>
+                                    <excludes>
+                                        <!-- Example package is reference-only; consumers bring
+                                             their own plugin class + modules. -->
+                                        <exclude>me/dzusill/core/example/**</exclude>
+                                        <!-- Exclude plugin.yml so consumers shading this library
+                                             don't get DzusillCore's main class in their JAR. -->
+                                        <exclude>plugin.yml</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
                         </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.3.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals><goal>jar-no-fork</goal></goals>
                     </execution>
                 </executions>
             </plugin>
