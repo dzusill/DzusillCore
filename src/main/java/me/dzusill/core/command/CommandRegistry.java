@@ -1,22 +1,23 @@
 package me.dzusill.core.command;
 
-import me.dzusill.core.CorePlugin;
-import me.dzusill.core.message.MessageService;
-import me.dzusill.core.service.Service;
+import java.lang.reflect.Field;
+import java.util.List;
+import java.util.Locale;
+
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandMap;
 import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.Field;
-import java.util.List;
-import java.util.Locale;
+import me.dzusill.core.CorePlugin;
+import me.dzusill.core.message.MessageService;
+import me.dzusill.core.service.Service;
 
 /**
- * Registers {@link CoreCommand}s with the server at runtime through Bukkit's {@link CommandMap},
- * so commands never need to be declared in {@code plugin.yml}. Each command is injected with its
- * plugin and {@link MessageService}, then wrapped in a lightweight {@link Command} bridge that
- * delegates execution and tab-completion back to the framework's dispatch.
+ * Registers {@link CoreCommand}s with the server at runtime through Bukkit's {@link CommandMap}, so commands never need
+ * to be declared in {@code plugin.yml}. Each command is injected with its plugin and {@link MessageService}, then
+ * wrapped in a lightweight {@link Command} bridge that delegates execution and tab-completion back to the framework's
+ * dispatch.
  */
 public final class CommandRegistry implements Service {
 
@@ -33,10 +34,9 @@ public final class CommandRegistry implements Service {
     }
 
     /**
-     * {@code Server#getCommandMap()} is a Paper-only convenience method, not part of plain
-     * Spigot/CraftBukkit's public API. The private {@code commandMap} field on the server
-     * implementation class has been stable since early Bukkit, so reflection works identically
-     * on every supported server implementation.
+     * {@code Server#getCommandMap()} is a Paper-only convenience method, not part of plain Spigot/CraftBukkit's public
+     * API. The private {@code commandMap} field on the server implementation class has been stable since early Bukkit,
+     * so reflection works identically on every supported server implementation.
      */
     private static CommandMap resolveCommandMap(CorePlugin plugin) {
         try {
@@ -57,8 +57,7 @@ public final class CommandRegistry implements Service {
     }
 
     /**
-     * Adapts a framework {@link CoreCommand} to Bukkit's {@link Command} type required by the
-     * {@link CommandMap}.
+     * Adapts a framework {@link CoreCommand} to Bukkit's {@link Command} type required by the {@link CommandMap}.
      */
     private static final class BridgeCommand extends Command {
 
@@ -79,7 +78,7 @@ public final class CommandRegistry implements Service {
 
         @Override
         public @NotNull List<String> tabComplete(@NotNull CommandSender sender, @NotNull String alias,
-                                                  @NotNull String[] args) {
+                @NotNull String[] args) {
             List<String> result = handler.onTabComplete(sender, this, alias, args);
             return result != null ? result : List.of();
         }

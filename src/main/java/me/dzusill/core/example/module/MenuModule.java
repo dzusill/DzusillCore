@@ -11,9 +11,9 @@ import me.dzusill.core.message.MessageService;
 import me.dzusill.core.module.AbstractModule;
 
 /**
- * Sets up the GUI subsystem: publishes the {@link MenuManager} and the {@link MenuRegistry},
- * registers the central {@link MenuListener}, and registers menus by key (just as
- * {@link CommandModule} registers commands). Closes all open menus on shutdown.
+ * Sets up the GUI subsystem: publishes the {@link MenuManager} and the {@link MenuRegistry}, registers the central
+ * {@link MenuListener}, and registers menus by key (just as {@link CommandModule} registers commands). Closes all open
+ * menus on shutdown.
  */
 public final class MenuModule extends AbstractModule {
 

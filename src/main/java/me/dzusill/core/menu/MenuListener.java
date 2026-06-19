@@ -1,17 +1,17 @@
 package me.dzusill.core.menu;
 
-import me.dzusill.core.CorePlugin;
-import me.dzusill.core.event.CoreListener;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 
+import me.dzusill.core.CorePlugin;
+import me.dzusill.core.event.CoreListener;
+
 /**
- * Single entry point for all GUI input. Recovers the {@link Menu} from the inventory holder and
- * routes clicks (and close events) to it; drags into a menu are cancelled unless every affected slot
- * is an input slot. This holder-based dispatch means individual menus never register their own
- * listeners.
+ * Single entry point for all GUI input. Recovers the {@link Menu} from the inventory holder and routes clicks (and
+ * close events) to it; drags into a menu are cancelled unless every affected slot is an input slot. This holder-based
+ * dispatch means individual menus never register their own listeners.
  */
 public final class MenuListener extends CoreListener {
 

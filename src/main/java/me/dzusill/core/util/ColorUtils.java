@@ -1,26 +1,27 @@
 package me.dzusill.core.util;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
- * Static helpers for turning configuration strings into Adventure {@link Component}s. Prefers
- * MiniMessage but bridges the legacy {@code &}-code format so older configs keep working.
+ * Static helpers for turning configuration strings into Adventure {@link Component}s. Prefers MiniMessage but bridges
+ * the legacy {@code &}-code format so older configs keep working.
  *
- * <p>All returned text components have italics disabled by default, matching the convention
- * expected for item names and lore (Minecraft italicizes custom names otherwise).</p>
+ * <p>
+ * All returned text components have italics disabled by default, matching the convention expected for item names and
+ * lore (Minecraft italicizes custom names otherwise).
+ * </p>
  */
 public final class ColorUtils {
 
     private static final MiniMessage MINI = MiniMessage.miniMessage();
-    private static final LegacyComponentSerializer LEGACY_AMP =
-            LegacyComponentSerializer.legacyAmpersand();
+    private static final LegacyComponentSerializer LEGACY_AMP = LegacyComponentSerializer.legacyAmpersand();
     private static final PlainTextComponentSerializer PLAIN = PlainTextComponentSerializer.plainText();
 
     private ColorUtils() {

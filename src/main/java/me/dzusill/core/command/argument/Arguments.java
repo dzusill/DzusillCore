@@ -3,8 +3,8 @@ package me.dzusill.core.command.argument;
 import java.util.Map;
 
 /**
- * Typed, read-only view over the values produced by {@link ArgumentParser}. Command logic pulls
- * already-parsed values by name without re-validating raw strings.
+ * Typed, read-only view over the values produced by {@link ArgumentParser}. Command logic pulls already-parsed values
+ * by name without re-validating raw strings.
  */
 public final class Arguments {
 
@@ -15,8 +15,8 @@ public final class Arguments {
     }
 
     /**
-     * @return {@code true} if a value was parsed for {@code name} (always {@code true} for
-     *         required arguments, conditional for optional ones)
+     * @return {@code true} if a value was parsed for {@code name} (always {@code true} for required arguments,
+     *         conditional for optional ones)
      */
     public boolean has(String name) {
         return values.containsKey(name);

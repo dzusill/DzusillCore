@@ -1,8 +1,8 @@
 -------------------------------------------------------------------------------
 Test set: me.dzusill.core.menu.MenuInputSlotTest
 -------------------------------------------------------------------------------
-Tests run: 5, Failures: 0, Errors: 4, Skipped: 0, Time elapsed: 0.196 s <<< FAILURE! -- in me.dzusill.core.menu.MenuInputSlotTest
-me.dzusill.core.menu.MenuInputSlotTest.clickOnNormalSlotIsCancelled -- Time elapsed: 0.042 s <<< ERROR!
+Tests run: 5, Failures: 0, Errors: 4, Skipped: 0, Time elapsed: 0.178 s <<< FAILURE! -- in me.dzusill.core.menu.MenuInputSlotTest
+me.dzusill.core.menu.MenuInputSlotTest.clickOnNormalSlotIsCancelled -- Time elapsed: 0.037 s <<< ERROR!
 org.mockito.exceptions.base.MockitoException: 
 
 Mockito cannot mock this class: class org.bukkit.event.inventory.InventoryClickEvent.
@@ -72,7 +72,7 @@ Caused by: java.lang.IllegalArgumentException: Java 25 (69) is not supported by 
 	at org.mockito.internal.creation.bytebuddy.InlineBytecodeGenerator.triggerRetransformation(InlineBytecodeGenerator.java:281)
 	... 19 more
 
-me.dzusill.core.menu.MenuInputSlotTest.listenerRoutesCloseToMenu -- Time elapsed: 0.043 s <<< ERROR!
+me.dzusill.core.menu.MenuInputSlotTest.listenerRoutesCloseToMenu -- Time elapsed: 0.036 s <<< ERROR!
 org.mockito.exceptions.base.MockitoException: 
 
 Mockito cannot mock this class: class org.bukkit.event.inventory.InventoryCloseEvent.
@@ -142,7 +142,7 @@ Caused by: java.lang.IllegalArgumentException: Java 25 (69) is not supported by 
 	at org.mockito.internal.creation.bytebuddy.InlineBytecodeGenerator.triggerRetransformation(InlineBytecodeGenerator.java:281)
 	... 19 more
 
-me.dzusill.core.menu.MenuInputSlotTest.clickInPlayerInventoryIsNeverCancelled -- Time elapsed: 0.046 s <<< ERROR!
+me.dzusill.core.menu.MenuInputSlotTest.clickInPlayerInventoryIsNeverCancelled -- Time elapsed: 0.041 s <<< ERROR!
 org.mockito.exceptions.base.MockitoException: 
 
 Mockito cannot mock this class: class org.bukkit.event.inventory.InventoryClickEvent.

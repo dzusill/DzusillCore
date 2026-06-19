@@ -11,9 +11,8 @@ import me.dzusill.core.message.Messages;
 import me.dzusill.core.message.Placeholder;
 
 /**
- * Example router command demonstrating a command tree: {@code /core} routes to subcommands and,
- * when invoked bare, prints its usage. Shows how a node with children inherits routing and
- * permission handling from {@link SubCommand}.
+ * Example router command demonstrating a command tree: {@code /core} routes to subcommands and, when invoked bare,
+ * prints its usage. Shows how a node with children inherits routing and permission handling from {@link SubCommand}.
  */
 @CommandMeta(name = "core", permission = "core.admin", description = "DzusillCore administration")
 public final class CoreAdminCommand extends CoreCommand {

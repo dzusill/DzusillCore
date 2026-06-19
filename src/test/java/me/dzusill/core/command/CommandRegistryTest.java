@@ -1,16 +1,18 @@
 package me.dzusill.core.command;
 
-import be.seeseemelk.mockbukkit.MockBukkit;
-import be.seeseemelk.mockbukkit.ServerMock;
-import be.seeseemelk.mockbukkit.entity.PlayerMock;
-import me.dzusill.core.CorePlugin;
-import me.dzusill.core.example.ExamplePlugin;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import org.bukkit.attribute.Attribute;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import me.dzusill.core.CorePlugin;
+import me.dzusill.core.example.ExamplePlugin;
+
+import be.seeseemelk.mockbukkit.MockBukkit;
+import be.seeseemelk.mockbukkit.ServerMock;
+import be.seeseemelk.mockbukkit.entity.PlayerMock;
 
 class CommandRegistryTest {
 

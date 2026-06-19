@@ -11,9 +11,9 @@ import me.dzusill.core.message.MessageService;
 import me.dzusill.core.module.AbstractModule;
 
 /**
- * Registers the example commands through the {@link CommandRegistry}. Demonstrates resolving
- * dependencies (message, config and menu services) from the registry rather than constructing
- * them directly, which is why this module is enabled after the ones that provide them.
+ * Registers the example commands through the {@link CommandRegistry}. Demonstrates resolving dependencies (message,
+ * config and menu services) from the registry rather than constructing them directly, which is why this module is
+ * enabled after the ones that provide them.
  */
 public final class CommandModule extends AbstractModule {
 

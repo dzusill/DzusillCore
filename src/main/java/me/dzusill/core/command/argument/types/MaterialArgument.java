@@ -1,19 +1,20 @@
 package me.dzusill.core.command.argument.types;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
+
+import org.bukkit.Material;
+
 import me.dzusill.core.command.CommandContext;
 import me.dzusill.core.command.CommandException;
 import me.dzusill.core.command.argument.ArgumentType;
 import me.dzusill.core.message.Messages;
 import me.dzusill.core.message.Placeholder;
-import org.bukkit.Material;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
 
 /**
- * Parses a token into a {@link Material}, accepting the standard {@code namespaced_key} form, and
- * suggests matching material names for autocomplete.
+ * Parses a token into a {@link Material}, accepting the standard {@code namespaced_key} form, and suggests matching
+ * material names for autocomplete.
  */
 public final class MaterialArgument implements ArgumentType<Material> {
 
@@ -28,9 +29,7 @@ public final class MaterialArgument implements ArgumentType<Material> {
 
     @Override
     public List<String> suggest(CommandContext context, String token) {
-        return Arrays.stream(Material.values())
-                .filter(material -> !material.isLegacy())
-                .map(material -> material.name().toLowerCase(Locale.ROOT))
-                .toList();
+        return Arrays.stream(Material.values()).filter(material -> !material.isLegacy())
+                .map(material -> material.name().toLowerCase(Locale.ROOT)).toList();
     }
 }

@@ -1,11 +1,12 @@
 package me.dzusill.core.menu.template;
 
-import me.dzusill.core.menu.Menu;
 import org.bukkit.inventory.ItemStack;
 
+import me.dzusill.core.menu.Menu;
+
 /**
- * Base class providing the layout primitives shared by concrete templates: filling the perimeter
- * (border) or every empty slot. Subclasses compose these in {@link #apply(Menu)}.
+ * Base class providing the layout primitives shared by concrete templates: filling the perimeter (border) or every
+ * empty slot. Subclasses compose these in {@link #apply(Menu)}.
  */
 public abstract class AbstractMenuTemplate implements MenuTemplate {
 
@@ -28,8 +29,8 @@ public abstract class AbstractMenuTemplate implements MenuTemplate {
     }
 
     /**
-     * Fills every currently-empty slot with {@code filler}. Applied before the menu's own content,
-     * so {@code decorate()} overwrites the slots it uses.
+     * Fills every currently-empty slot with {@code filler}. Applied before the menu's own content, so
+     * {@code decorate()} overwrites the slots it uses.
      */
     protected void applyFill(Menu menu, ItemStack filler) {
         menu.fillEmpty(filler);

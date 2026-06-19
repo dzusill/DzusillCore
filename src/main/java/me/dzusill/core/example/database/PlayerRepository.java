@@ -1,17 +1,16 @@
 package me.dzusill.core.example.database;
 
+import java.util.List;
+import java.util.UUID;
+
 import me.dzusill.core.database.Database;
 import me.dzusill.core.database.query.RowMapper;
 import me.dzusill.core.database.repository.AbstractSqlRepository;
 
-import java.util.List;
-import java.util.UUID;
-
 /**
- * Example repository showing how little is needed for full async CRUD on top of
- * {@link AbstractSqlRepository}: declare the table, its columns and key, and how rows map to and
- * from the entity. The upsert used by {@code save} is generated per dialect, so this works on both
- * MySQL and PostgreSQL unchanged.
+ * Example repository showing how little is needed for full async CRUD on top of {@link AbstractSqlRepository}: declare
+ * the table, its columns and key, and how rows map to and from the entity. The upsert used by {@code save} is generated
+ * per dialect, so this works on both MySQL and PostgreSQL unchanged.
  *
  * <pre>{@code
  * repo.find(player.getUniqueId())
@@ -41,11 +40,8 @@ public final class PlayerRepository extends AbstractSqlRepository<UUID, PlayerRe
 
     @Override
     protected RowMapper<PlayerRecord> mapper() {
-        return resultSet -> new PlayerRecord(
-                UUID.fromString(resultSet.getString("uuid")),
-                resultSet.getString("name"),
-                resultSet.getLong("coins"),
-                resultSet.getLong("last_seen"));
+        return resultSet -> new PlayerRecord(UUID.fromString(resultSet.getString("uuid")), resultSet.getString("name"),
+                resultSet.getLong("coins"), resultSet.getLong("last_seen"));
     }
 
     @Override

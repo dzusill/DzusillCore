@@ -1,22 +1,22 @@
 package me.dzusill.core.menu;
 
-import me.dzusill.core.CorePlugin;
-import me.dzusill.core.message.MessageService;
-import me.dzusill.core.message.Messages;
-import me.dzusill.core.service.Service;
-import org.bukkit.entity.Player;
-
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import org.bukkit.entity.Player;
+
+import me.dzusill.core.CorePlugin;
+import me.dzusill.core.message.MessageService;
+import me.dzusill.core.message.Messages;
+import me.dzusill.core.service.Service;
+
 /**
  * Registers menus by key so they can be opened from anywhere by name, the GUI analogue of
- * {@link me.dzusill.core.command.CommandRegistry}. Register a factory once (typically a constructor
- * reference) and open it later with {@link #open(Player, String)}; the registry resolves the
- * per-player {@link PlayerMenuContext}, enforces the menu's {@code @MenuMeta} permission (replying
- * with {@link Messages#NO_PERMISSION} on denial) and opens it.
+ * {@link me.dzusill.core.command.CommandRegistry}. Register a factory once (typically a constructor reference) and open
+ * it later with {@link #open(Player, String)}; the registry resolves the per-player {@link PlayerMenuContext}, enforces
+ * the menu's {@code @MenuMeta} permission (replying with {@link Messages#NO_PERMISSION} on denial) and opens it.
  */
 public final class MenuRegistry implements Service {
 
@@ -45,8 +45,8 @@ public final class MenuRegistry implements Service {
     /**
      * Opens the menu registered under {@code key} for {@code player}.
      *
-     * @return {@code true} if the menu was opened, {@code false} if the key is unknown or the player
-     *         lacks the menu's permission
+     * @return {@code true} if the menu was opened, {@code false} if the key is unknown or the player lacks the menu's
+     *         permission
      */
     public boolean open(Player player, String key) {
         return open(player, key, context -> {
@@ -54,11 +54,11 @@ public final class MenuRegistry implements Service {
     }
 
     /**
-     * Opens the menu registered under {@code key}, first running {@code seed} against the player's
-     * context (e.g. to pass the item being edited) so the menu can read it in {@code decorate()}.
+     * Opens the menu registered under {@code key}, first running {@code seed} against the player's context (e.g. to
+     * pass the item being edited) so the menu can read it in {@code decorate()}.
      *
-     * @return {@code true} if the menu was opened, {@code false} if the key is unknown or the player
-     *         lacks the menu's permission
+     * @return {@code true} if the menu was opened, {@code false} if the key is unknown or the player lacks the menu's
+     *         permission
      */
     public boolean open(Player player, String key, Consumer<PlayerMenuContext> seed) {
         MenuFactory factory = factories.get(key.toLowerCase(Locale.ROOT));

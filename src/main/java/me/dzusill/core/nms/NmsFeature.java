@@ -1,12 +1,14 @@
 package me.dzusill.core.nms;
 
 /**
- * Optional capabilities an {@link NmsAdapter} may provide. Callers should gate version-sensitive
- * code with {@link NmsAdapter#supports(NmsFeature)} instead of catching exceptions, so a server on
- * an unmapped/untested version degrades gracefully rather than erroring.
+ * Optional capabilities an {@link NmsAdapter} may provide. Callers should gate version-sensitive code with
+ * {@link NmsAdapter#supports(NmsFeature)} instead of catching exceptions, so a server on an unmapped/untested version
+ * degrades gracefully rather than erroring.
  *
- * <p>This is a deliberately small starter set covering the primitives most plugins reach for NMS to
- * do. Forks add their own constants here as they grow the {@link NmsAdapter} contract.</p>
+ * <p>
+ * This is a deliberately small starter set covering the primitives most plugins reach for NMS to do. Forks add their
+ * own constants here as they grow the {@link NmsAdapter} contract.
+ * </p>
  */
 public enum NmsFeature {
 

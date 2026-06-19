@@ -1,16 +1,16 @@
 package me.dzusill.core.menu;
 
-import me.dzusill.core.service.Service;
-import org.bukkit.entity.Player;
-
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.bukkit.entity.Player;
+
+import me.dzusill.core.service.Service;
+
 /**
- * Owns the per-player {@link PlayerMenuContext} instances and provides menu lifecycle helpers.
- * Closes any framework menus that are still open during plugin shutdown so players are not left
- * staring at dead inventories.
+ * Owns the per-player {@link PlayerMenuContext} instances and provides menu lifecycle helpers. Closes any framework
+ * menus that are still open during plugin shutdown so players are not left staring at dead inventories.
  */
 public final class MenuManager implements Service {
 
@@ -38,10 +38,9 @@ public final class MenuManager implements Service {
     }
 
     /**
-     * Refreshes every online player's currently open menu if it's an instance of
-     * {@code menuType}. For broadcasting a backend state change (e.g. a lottery draw completing)
-     * to everyone currently looking at a menu backed by that state, without each menu having to
-     * poll for changes itself.
+     * Refreshes every online player's currently open menu if it's an instance of {@code menuType}. For broadcasting a
+     * backend state change (e.g. a lottery draw completing) to everyone currently looking at a menu backed by that
+     * state, without each menu having to poll for changes itself.
      */
     public void refreshAll(Class<? extends Menu> menuType) {
         for (PlayerMenuContext context : contexts.values()) {
@@ -53,8 +52,8 @@ public final class MenuManager implements Service {
     }
 
     /**
-     * Closes every player's currently open menu if it's an instance of {@code menuType}.
-     * Use at state-transition points where showing stale UI would confuse the player.
+     * Closes every player's currently open menu if it's an instance of {@code menuType}. Use at state-transition points
+     * where showing stale UI would confuse the player.
      */
     public void closeAll(Class<? extends Menu> menuType) {
         for (PlayerMenuContext context : contexts.values()) {
@@ -68,10 +67,12 @@ public final class MenuManager implements Service {
     /**
      * Closes every open framework menu. Safe to call from {@code onDisable}.
      *
-     * <p>Deliberately goes through our own tracked {@link PlayerMenuContext#current()} rather
-     * than {@code Player#getOpenInventory()}: {@code InventoryView} is a class on older Bukkit
-     * and an interface on newer Bukkit, so code compiled against one shape can throw
-     * {@code IncompatibleClassChangeError} against a server running the other.</p>
+     * <p>
+     * Deliberately goes through our own tracked {@link PlayerMenuContext#current()} rather than
+     * {@code Player#getOpenInventory()}: {@code InventoryView} is a class on older Bukkit and an interface on newer
+     * Bukkit, so code compiled against one shape can throw {@code IncompatibleClassChangeError} against a server
+     * running the other.
+     * </p>
      */
     public void closeAll() {
         for (PlayerMenuContext context : contexts.values()) {

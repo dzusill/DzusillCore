@@ -1,27 +1,29 @@
 package me.dzusill.core.nms.version;
 
+import org.bukkit.entity.Player;
+
 import me.dzusill.core.nms.MinecraftVersion;
 import me.dzusill.core.nms.NmsAdapter;
 import me.dzusill.core.nms.NmsFeature;
 import me.dzusill.core.nms.reflect.Reflection;
-import org.bukkit.entity.Player;
 
 /**
- * Reflection-based default adapter covering the whole supported range without compiling against any
- * server jar. It implements the primitives that reflection can do <em>reliably</em> across the 1.17
- * package move and the 1.20.5 mapping change:
+ * Reflection-based default adapter covering the whole supported range without compiling against any server jar. It
+ * implements the primitives that reflection can do <em>reliably</em> across the 1.17 package move and the 1.20.5
+ * mapping change:
  *
  * <ul>
- *   <li>{@link NmsFeature#NMS_HANDLE} — {@code getHandle()} exists on every CraftBukkit wrapper.</li>
- *   <li>{@link NmsFeature#PLAYER_PING} — Bukkit-native {@code Player#getPing()} from 1.17; the NMS
- *       {@code EntityPlayer.ping} field before that.</li>
+ * <li>{@link NmsFeature#NMS_HANDLE} — {@code getHandle()} exists on every CraftBukkit wrapper.</li>
+ * <li>{@link NmsFeature#PLAYER_PING} — Bukkit-native {@code Player#getPing()} from 1.17; the NMS
+ * {@code EntityPlayer.ping} field before that.</li>
  * </ul>
  *
- * <p>{@link NmsFeature#PACKET_SENDING} is deliberately <b>not</b> supported here: from 1.17 the NMS
- * connection field/method names are obfuscated per version, so reliable packet work needs a mapped
- * per-version adapter. That is the documented extension point — a fork registers its own
- * {@link NmsAdapter} on {@link me.dzusill.core.nms.NmsAdapters} and overrides this behaviour. See
- * {@code docs/nms/extending.md}.</p>
+ * <p>
+ * {@link NmsFeature#PACKET_SENDING} is deliberately <b>not</b> supported here: from 1.17 the NMS connection
+ * field/method names are obfuscated per version, so reliable packet work needs a mapped per-version adapter. That is
+ * the documented extension point — a fork registers its own {@link NmsAdapter} on
+ * {@link me.dzusill.core.nms.NmsAdapters} and overrides this behaviour. See {@code docs/nms/extending.md}.
+ * </p>
  */
 public final class ReflectiveNmsAdapter implements NmsAdapter {
 

@@ -1,6 +1,11 @@
 package me.dzusill.core.menu;
 
-import be.seeseemelk.mockbukkit.MockBukkit;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -8,15 +13,11 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import be.seeseemelk.mockbukkit.MockBukkit;
 
 /**
- * Pure visibility/click-guard logic, the menu analogue of a command's per-node permission gating.
- * Exercised without opening an inventory (mocked {@link Player}, MockBukkit only for {@code
+ * Pure visibility/click-guard logic, the menu analogue of a command's per-node permission gating. Exercised without
+ * opening an inventory (mocked {@link Player}, MockBukkit only for {@code
  * ItemStack} construction).
  */
 class MenuButtonTest {

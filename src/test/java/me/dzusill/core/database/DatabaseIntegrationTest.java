@@ -1,25 +1,27 @@
 package me.dzusill.core.database;
 
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
-import me.dzusill.core.database.repository.SqlDataStore;
-import me.dzusill.core.example.database.PlayerRecord;
-import me.dzusill.core.example.database.PlayerRepository;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-import java.util.Optional;
-import java.util.UUID;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Optional;
+import java.util.UUID;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+
+import me.dzusill.core.database.repository.SqlDataStore;
+import me.dzusill.core.example.database.PlayerRecord;
+import me.dzusill.core.example.database.PlayerRepository;
+
 /**
- * Exercises the full database stack (Database -> repository / SqlDataStore) against an in-memory
- * H2 instance in MySQL-compatibility mode, so CRUD and dialect upsert run offline without a real
- * server. The async executor is synchronous ({@code Runnable::run}) so futures complete inline.
+ * Exercises the full database stack (Database -> repository / SqlDataStore) against an in-memory H2 instance in
+ * MySQL-compatibility mode, so CRUD and dialect upsert run offline without a real server. The async executor is
+ * synchronous ({@code Runnable::run}) so futures complete inline.
  */
 class DatabaseIntegrationTest {
 
@@ -29,8 +31,8 @@ class DatabaseIntegrationTest {
     @BeforeEach
     void setUp() {
         HikariConfig config = new HikariConfig();
-        config.setJdbcUrl("jdbc:h2:mem:dz_" + UUID.randomUUID().toString().replace("-", "")
-                + ";MODE=MySQL;DB_CLOSE_DELAY=-1");
+        config.setJdbcUrl(
+                "jdbc:h2:mem:dz_" + UUID.randomUUID().toString().replace("-", "") + ";MODE=MySQL;DB_CLOSE_DELAY=-1");
         dataSource = new HikariDataSource(config);
         database = new AbstractSqlDatabase(DatabaseType.MYSQL, dataSource, Runnable::run) {
         };
@@ -65,14 +67,12 @@ class DatabaseIntegrationTest {
     void sqlDataStorePersistsAndReloads() {
         database.update("CREATE TABLE kv (k VARCHAR(64) PRIMARY KEY, v VARCHAR(255))").join();
 
-        SqlDataStore<String> store = new SqlDataStore<>(
-                database, "kv", "k", "v", value -> value, Object::toString);
+        SqlDataStore<String> store = new SqlDataStore<>(database, "kv", "k", "v", value -> value, Object::toString);
         store.put("alpha", "1");
         store.put("beta", "2");
         store.save();
 
-        SqlDataStore<String> reloaded = new SqlDataStore<>(
-                database, "kv", "k", "v", value -> value, Object::toString);
+        SqlDataStore<String> reloaded = new SqlDataStore<>(database, "kv", "k", "v", value -> value, Object::toString);
         reloaded.load();
 
         assertEquals("1", reloaded.get("alpha").orElseThrow());

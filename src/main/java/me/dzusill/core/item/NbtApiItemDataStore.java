@@ -1,19 +1,21 @@
 package me.dzusill.core.item;
 
-import de.tr7zw.nbtapi.NBTItem;
+import java.util.Set;
+
 import org.bukkit.inventory.ItemStack;
 
-import java.util.Set;
+import de.tr7zw.nbtapi.NBTItem;
 
 /**
  * {@link ItemDataStore} backed by NBTAPI, writing raw, un-namespaced NBT root tags. Use this (over
- * {@link PdcItemDataStore}) when a plugin must read or preserve an existing case-sensitive item
- * format — e.g. legacy items tagged {@code Playerkills}/{@code StatTag} that predate the persistent
- * data container.
+ * {@link PdcItemDataStore}) when a plugin must read or preserve an existing case-sensitive item format — e.g. legacy
+ * items tagged {@code Playerkills}/{@code StatTag} that predate the persistent data container.
  *
- * <p>Requires the NBTAPI plugin on the server ({@code depend: [NBTAPI]}). Because NBTAPI resolves
- * NMS at runtime it cannot run under MockBukkit; cover the calling logic with unit tests against
- * {@link PdcItemDataStore} and exercise this implementation on a live server.</p>
+ * <p>
+ * Requires the NBTAPI plugin on the server ({@code depend: [NBTAPI]}). Because NBTAPI resolves NMS at runtime it cannot
+ * run under MockBukkit; cover the calling logic with unit tests against {@link PdcItemDataStore} and exercise this
+ * implementation on a live server.
+ * </p>
  */
 public final class NbtApiItemDataStore implements ItemDataStore {
 

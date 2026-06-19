@@ -1,18 +1,18 @@
 package me.dzusill.core.database;
 
-import org.junit.jupiter.api.Test;
-
-import java.util.List;
-import java.util.Map;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.List;
+import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+
 class DatabaseTypeTest {
 
-    private static final DatabaseCredentials CREDS =
-            new DatabaseCredentials("localhost", 3306, "mc", "user", "pass", 10, 30000L, Map.of());
+    private static final DatabaseCredentials CREDS = new DatabaseCredentials("localhost", 3306, "mc", "user", "pass",
+            10, 30000L, Map.of());
 
     @Test
     void buildsMysqlUrl() {

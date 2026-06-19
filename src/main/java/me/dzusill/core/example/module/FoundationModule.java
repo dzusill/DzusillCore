@@ -9,8 +9,8 @@ import me.dzusill.core.module.AbstractModule;
 import me.dzusill.core.scheduler.SchedulerService;
 
 /**
- * Foundational module: publishes the services every other module relies on (configuration,
- * messages, scheduling, listener registration). Enabled first so later modules can resolve these.
+ * Foundational module: publishes the services every other module relies on (configuration, messages, scheduling,
+ * listener registration). Enabled first so later modules can resolve these.
  */
 public final class FoundationModule extends AbstractModule {
 

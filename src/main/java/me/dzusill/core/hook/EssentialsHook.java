@@ -1,11 +1,12 @@
 package me.dzusill.core.hook;
 
-import com.earth2me.essentials.IEssentials;
 import org.bukkit.Bukkit;
 
+import com.earth2me.essentials.IEssentials;
+
 /**
- * Integration with EssentialsX. When active, exposes the {@link IEssentials} API for reading
- * Essentials user data (homes, warps, balances, etc.).
+ * Integration with EssentialsX. When active, exposes the {@link IEssentials} API for reading Essentials user data
+ * (homes, warps, balances, etc.).
  */
 public final class EssentialsHook extends PluginHook {
 

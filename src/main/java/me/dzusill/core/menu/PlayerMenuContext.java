@@ -1,17 +1,16 @@
 package me.dzusill.core.menu;
 
-import org.bukkit.entity.Player;
-
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.bukkit.entity.Player;
+
 /**
- * Per-player companion object that carries state across the menu system: arbitrary transfer data
- * (e.g. the item being edited), the currently open menu, and a navigation history used to power a
- * generic "back" button. Each online player has exactly one context, owned by the
- * {@link MenuManager}.
+ * Per-player companion object that carries state across the menu system: arbitrary transfer data (e.g. the item being
+ * edited), the currently open menu, and a navigation history used to power a generic "back" button. Each online player
+ * has exactly one context, owned by the {@link MenuManager}.
  */
 public final class PlayerMenuContext {
 

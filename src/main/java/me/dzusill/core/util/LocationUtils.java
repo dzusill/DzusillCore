@@ -6,8 +6,7 @@ import org.bukkit.World;
 
 /**
  * Serializes {@link Location}s to and from a compact string form suitable for YAML storage:
- * {@code world,x,y,z,yaw,pitch}. Keeping this in one place avoids subtly different formats
- * across plugins.
+ * {@code world,x,y,z,yaw,pitch}. Keeping this in one place avoids subtly different formats across plugins.
  */
 public final class LocationUtils {
 
@@ -20,12 +19,8 @@ public final class LocationUtils {
      * Serializes a location to {@code world,x,y,z,yaw,pitch}.
      */
     public static String serialize(Location location) {
-        return String.join(SEPARATOR,
-                location.getWorld().getName(),
-                Double.toString(location.getX()),
-                Double.toString(location.getY()),
-                Double.toString(location.getZ()),
-                Float.toString(location.getYaw()),
+        return String.join(SEPARATOR, location.getWorld().getName(), Double.toString(location.getX()),
+                Double.toString(location.getY()), Double.toString(location.getZ()), Float.toString(location.getYaw()),
                 Float.toString(location.getPitch()));
     }
 

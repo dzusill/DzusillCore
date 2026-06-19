@@ -1,15 +1,16 @@
 package me.dzusill.core.example.listener;
 
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.player.PlayerQuitEvent;
+
 import me.dzusill.core.CorePlugin;
 import me.dzusill.core.event.AutoRegister;
 import me.dzusill.core.event.CoreListener;
 import me.dzusill.core.menu.MenuManager;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.player.PlayerQuitEvent;
 
 /**
- * Example listener showing the {@link CoreListener} base and the {@link AutoRegister} marker.
- * Releases a player's menu context on quit so the manager does not retain stale references.
+ * Example listener showing the {@link CoreListener} base and the {@link AutoRegister} marker. Releases a player's menu
+ * context on quit so the manager does not retain stale references.
  */
 @AutoRegister
 public final class PlayerSessionListener extends CoreListener {

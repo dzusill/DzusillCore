@@ -1,20 +1,22 @@
 package me.dzusill.core.menu;
 
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.function.Consumer;
-import java.util.function.Predicate;
-
 /**
- * A self-contained, permission-aware menu node: an icon, an optional click handler, an optional
- * permission node and an optional visibility predicate. It is the per-slot analogue of a command's
- * {@code SubCommand} — just as the command tree hides children a sender cannot use and re-checks
- * permission before running, a button is hidden during render when the viewer fails its rule and is
- * re-checked before its handler fires.
+ * A self-contained, permission-aware menu node: an icon, an optional click handler, an optional permission node and an
+ * optional visibility predicate. It is the per-slot analogue of a command's {@code SubCommand} — just as the command
+ * tree hides children a sender cannot use and re-checks permission before running, a button is hidden during render
+ * when the viewer fails its rule and is re-checked before its handler fires.
  *
- * <p>Build one fluently from inside {@link Menu#decorate()}:</p>
+ * <p>
+ * Build one fluently from inside {@link Menu#decorate()}:
+ * </p>
+ *
  * <pre>{@code
  * button(13)
  *     .icon(new ItemBuilder(Material.DIAMOND).name("<aqua>Buy").build())
@@ -51,8 +53,8 @@ public final class MenuButton {
     }
 
     /**
-     * @return whether this button should render for {@code player}: it passes when the permission is
-     *         empty or held, and the visibility predicate (if any) accepts the player
+     * @return whether this button should render for {@code player}: it passes when the permission is empty or held, and
+     *         the visibility predicate (if any) accepts the player
      */
     public boolean visibleTo(Player player) {
         if (permission != null && !permission.isEmpty() && !player.hasPermission(permission)) {
@@ -73,9 +75,9 @@ public final class MenuButton {
     }
 
     /**
-     * Fluent builder for a {@link MenuButton}. When obtained from {@link Menu#button(int)} the
-     * terminal {@link #add()} registers the button into that menu at the bound slot; the standalone
-     * {@link MenuButton#builder()} form uses {@link #build()} instead (e.g. in tests).
+     * Fluent builder for a {@link MenuButton}. When obtained from {@link Menu#button(int)} the terminal {@link #add()}
+     * registers the button into that menu at the bound slot; the standalone {@link MenuButton#builder()} form uses
+     * {@link #build()} instead (e.g. in tests).
      */
     public static final class Builder {
 

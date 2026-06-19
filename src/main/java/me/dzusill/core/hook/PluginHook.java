@@ -3,9 +3,9 @@ package me.dzusill.core.hook;
 import org.bukkit.Bukkit;
 
 /**
- * Base class for an integration with an optional (soft-dependency) plugin. Encapsulates the
- * presence check and one-time setup, so callers interact with hooks uniformly and never sprinkle
- * {@code isPluginEnabled} checks throughout the codebase.
+ * Base class for an integration with an optional (soft-dependency) plugin. Encapsulates the presence check and one-time
+ * setup, so callers interact with hooks uniformly and never sprinkle {@code isPluginEnabled} checks throughout the
+ * codebase.
  */
 public abstract class PluginHook {
 

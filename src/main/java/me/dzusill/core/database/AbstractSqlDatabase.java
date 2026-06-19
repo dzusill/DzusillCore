@@ -1,11 +1,5 @@
 package me.dzusill.core.database;
 
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
-import me.dzusill.core.database.query.RowMapper;
-import me.dzusill.core.database.query.SqlFunction;
-import me.dzusill.core.database.query.Statements;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -17,13 +11,22 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+
+import me.dzusill.core.database.query.RowMapper;
+import me.dzusill.core.database.query.SqlFunction;
+import me.dzusill.core.database.query.Statements;
+
 /**
- * Base {@link Database} implementation backed by a HikariCP pool. Subclasses only declare which
- * {@link DatabaseType} they are; all pooling, async wrapping and statement execution live here, so
- * MySQL/PostgreSQL (and future backends) differ by configuration alone.
+ * Base {@link Database} implementation backed by a HikariCP pool. Subclasses only declare which {@link DatabaseType}
+ * they are; all pooling, async wrapping and statement execution live here, so MySQL/PostgreSQL (and future backends)
+ * differ by configuration alone.
  *
- * <p>Async behaviour is provided by a supplied {@link Executor}; this class never references the
- * Bukkit API, which keeps it unit-testable against an embedded database.</p>
+ * <p>
+ * Async behaviour is provided by a supplied {@link Executor}; this class never references the Bukkit API, which keeps
+ * it unit-testable against an embedded database.
+ * </p>
  */
 public abstract class AbstractSqlDatabase implements Database {
 
@@ -78,8 +81,7 @@ public abstract class AbstractSqlDatabase implements Database {
     @Override
     public final <T> CompletableFuture<Optional<T>> queryOne(String sql, RowMapper<T> mapper, Object... params) {
         return supplyAsync(() -> {
-            try (Connection connection = connection();
-                 PreparedStatement statement = connection.prepareStatement(sql)) {
+            try (Connection connection = connection(); PreparedStatement statement = connection.prepareStatement(sql)) {
                 Statements.bind(statement, params);
                 try (ResultSet resultSet = statement.executeQuery()) {
                     return resultSet.next() ? Optional.ofNullable(mapper.map(resultSet)) : Optional.<T>empty();
@@ -91,8 +93,7 @@ public abstract class AbstractSqlDatabase implements Database {
     @Override
     public final <T> CompletableFuture<List<T>> queryList(String sql, RowMapper<T> mapper, Object... params) {
         return supplyAsync(() -> {
-            try (Connection connection = connection();
-                 PreparedStatement statement = connection.prepareStatement(sql)) {
+            try (Connection connection = connection(); PreparedStatement statement = connection.prepareStatement(sql)) {
                 Statements.bind(statement, params);
                 try (ResultSet resultSet = statement.executeQuery()) {
                     List<T> results = new ArrayList<>();
@@ -108,8 +109,7 @@ public abstract class AbstractSqlDatabase implements Database {
     @Override
     public final CompletableFuture<Integer> update(String sql, Object... params) {
         return supplyAsync(() -> {
-            try (Connection connection = connection();
-                 PreparedStatement statement = connection.prepareStatement(sql)) {
+            try (Connection connection = connection(); PreparedStatement statement = connection.prepareStatement(sql)) {
                 Statements.bind(statement, params);
                 return statement.executeUpdate();
             }
@@ -119,8 +119,7 @@ public abstract class AbstractSqlDatabase implements Database {
     @Override
     public final CompletableFuture<int[]> batch(String sql, List<Object[]> parameterRows) {
         return supplyAsync(() -> {
-            try (Connection connection = connection();
-                 PreparedStatement statement = connection.prepareStatement(sql)) {
+            try (Connection connection = connection(); PreparedStatement statement = connection.prepareStatement(sql)) {
                 for (Object[] row : parameterRows) {
                     Statements.bind(statement, row);
                     statement.addBatch();

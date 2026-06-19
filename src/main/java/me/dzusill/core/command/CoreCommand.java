@@ -1,25 +1,27 @@
 package me.dzusill.core.command;
 
-import me.dzusill.core.CorePlugin;
-import me.dzusill.core.message.Messages;
-import me.dzusill.core.message.MessageService;
+import java.util.List;
+import java.util.logging.Level;
+
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-import java.util.logging.Level;
+import me.dzusill.core.CorePlugin;
+import me.dzusill.core.message.MessageService;
+import me.dzusill.core.message.Messages;
 
 /**
- * Root of a command tree and the bridge to Bukkit. A {@code CoreCommand} <em>is</em> a
- * {@link SubCommand} (the root node), but additionally implements {@link CommandExecutor} and
- * {@link TabCompleter} so it can be registered with the server. All dispatch, permission checks,
- * argument parsing and tab-completion are inherited from {@link SubCommand}; subclasses only
- * declare structure and implement {@link #run}.
+ * Root of a command tree and the bridge to Bukkit. A {@code CoreCommand} <em>is</em> a {@link SubCommand} (the root
+ * node), but additionally implements {@link CommandExecutor} and {@link TabCompleter} so it can be registered with the
+ * server. All dispatch, permission checks, argument parsing and tab-completion are inherited from {@link SubCommand};
+ * subclasses only declare structure and implement {@link #run}.
  *
- * <p>Register instances through {@link CommandRegistry}; do not declare them in {@code plugin.yml}.</p>
+ * <p>
+ * Register instances through {@link CommandRegistry}; do not declare them in {@code plugin.yml}.
+ * </p>
  */
 public abstract class CoreCommand extends SubCommand implements CommandExecutor, TabCompleter {
 
@@ -43,8 +45,8 @@ public abstract class CoreCommand extends SubCommand implements CommandExecutor,
     }
 
     @Override
-    public final boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
-                                   @NotNull String label, @NotNull String[] args) {
+    public final boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label,
+            @NotNull String[] args) {
         CommandContext context = new CommandContext(plugin, sender, messages, label, args);
         try {
             execute(context, 0);
@@ -62,7 +64,7 @@ public abstract class CoreCommand extends SubCommand implements CommandExecutor,
 
     @Override
     public final List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command,
-                                            @NotNull String alias, @NotNull String[] args) {
+            @NotNull String alias, @NotNull String[] args) {
         CommandContext context = new CommandContext(plugin, sender, messages, alias, args);
         return complete(context, 0);
     }

@@ -1,7 +1,5 @@
 package me.dzusill.core.database;
 
-import org.bukkit.plugin.Plugin;
-
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -10,10 +8,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.bukkit.plugin.Plugin;
+
 /**
- * Runs a bundled, per-dialect schema file ({@code schema-<type>.sql}) at startup so required
- * tables exist before the plugin uses them. Statements are executed synchronously during enable
- * (by joining the async futures), which is acceptable one-time startup cost.
+ * Runs a bundled, per-dialect schema file ({@code schema-<type>.sql}) at startup so required tables exist before the
+ * plugin uses them. Statements are executed synchronously during enable (by joining the async futures), which is
+ * acceptable one-time startup cost.
  */
 public final class SchemaInitializer {
 
@@ -23,7 +23,8 @@ public final class SchemaInitializer {
     /**
      * Loads and executes {@code schema-<type>.sql} for the database's dialect, if present.
      *
-     * @throws DatabaseException if a statement fails to execute
+     * @throws DatabaseException
+     *             if a statement fails to execute
      */
     public static void initialize(Plugin plugin, Database database) {
         String resource = "schema-" + database.type().name().toLowerCase() + ".sql";
@@ -45,12 +46,9 @@ public final class SchemaInitializer {
 
     private static List<String> readStatements(InputStream stream) {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
-            String content = reader.lines()
-                    .filter(line -> !line.trim().startsWith("--"))
+            String content = reader.lines().filter(line -> !line.trim().startsWith("--"))
                     .collect(Collectors.joining("\n"));
-            return Arrays.stream(content.split(";"))
-                    .map(String::trim)
-                    .filter(statement -> !statement.isEmpty())
+            return Arrays.stream(content.split(";")).map(String::trim).filter(statement -> !statement.isEmpty())
                     .toList();
         } catch (Exception ex) {
             throw new DatabaseException("Failed to read schema resource", ex);

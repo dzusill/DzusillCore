@@ -1,16 +1,17 @@
 package me.dzusill.core.nms;
 
-import me.dzusill.core.nms.version.NoOpNmsAdapter;
-import me.dzusill.core.nms.version.ReflectiveNmsAdapter;
-import org.junit.jupiter.api.Test;
-
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.junit.jupiter.api.Test;
+
+import me.dzusill.core.nms.version.NoOpNmsAdapter;
+import me.dzusill.core.nms.version.ReflectiveNmsAdapter;
 
 class NmsAdaptersTest {
 
@@ -49,13 +50,11 @@ class NmsAdaptersTest {
     void onlyTheMatchingFactoryIsInvoked() {
         AtomicBoolean nonMatchingInvoked = new AtomicBoolean(false);
 
-        NmsAdapter adapter = NmsAdapters.empty()
-                .register(v -> v.minor() == 21, NoOpNmsAdapter::new)
+        NmsAdapter adapter = NmsAdapters.empty().register(v -> v.minor() == 21, NoOpNmsAdapter::new)
                 .register(v -> v.minor() == 8, v -> {
                     nonMatchingInvoked.set(true);
                     return new NoOpNmsAdapter(v);
-                })
-                .select(of(1, 21, 1));
+                }).select(of(1, 21, 1));
 
         assertInstanceOf(NoOpNmsAdapter.class, adapter);
         assertFalse(nonMatchingInvoked.get(), "a non-matching registration's factory must never run");
@@ -65,7 +64,7 @@ class NmsAdaptersTest {
     void lastRegisteredMatchWins() {
         NmsAdapter override = new NoOpNmsAdapter(of(1, 21, 1));
 
-        NmsAdapter selected = NmsAdapters.defaults()           // reflective for 1.16+
+        NmsAdapter selected = NmsAdapters.defaults() // reflective for 1.16+
                 .register(v -> v.isAtLeast(1, 21), v -> override) // fork override for 1.21+
                 .select(of(1, 21, 1));
 

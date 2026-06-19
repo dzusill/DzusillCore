@@ -1,22 +1,23 @@
 package me.dzusill.core.database.repository;
 
-import me.dzusill.core.database.Database;
-import me.dzusill.core.database.query.RowMapper;
-import me.dzusill.core.database.query.Statements;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import me.dzusill.core.database.Database;
+import me.dzusill.core.database.query.RowMapper;
+import me.dzusill.core.database.query.Statements;
+
 /**
- * SQL-backed {@link Repository} that turns a handful of table descriptors (provided by subclasses)
- * into full async CRUD. The insert-or-update statement is produced by the database's
- * {@link me.dzusill.core.database.DatabaseType}, so the same repository works on MySQL and
- * PostgreSQL without dialect-specific code.
+ * SQL-backed {@link Repository} that turns a handful of table descriptors (provided by subclasses) into full async
+ * CRUD. The insert-or-update statement is produced by the database's {@link me.dzusill.core.database.DatabaseType}, so
+ * the same repository works on MySQL and PostgreSQL without dialect-specific code.
  *
- * @param <ID> identifier type
- * @param <T>  entity type
+ * @param <ID>
+ *            identifier type
+ * @param <T>
+ *            entity type
  */
 public abstract class AbstractSqlRepository<ID, T> implements Repository<ID, T> {
 
@@ -71,8 +72,7 @@ public abstract class AbstractSqlRepository<ID, T> implements Repository<ID, T> 
     @Override
     public CompletableFuture<Boolean> exists(ID id) {
         String sql = "SELECT 1 FROM " + table() + " WHERE " + whereKeys();
-        return database.queryOne(sql, resultSet -> Boolean.TRUE, keyValues(id))
-                .thenApply(Optional::isPresent);
+        return database.queryOne(sql, resultSet -> Boolean.TRUE, keyValues(id)).thenApply(Optional::isPresent);
     }
 
     private String whereKeys() {

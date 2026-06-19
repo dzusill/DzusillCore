@@ -1,17 +1,18 @@
 package me.dzusill.core.command.argument;
 
-import me.dzusill.core.command.CommandContext;
-import me.dzusill.core.command.CommandException;
-import me.dzusill.core.command.argument.types.IntArgument;
-import me.dzusill.core.command.argument.types.StringArgument;
-import org.junit.jupiter.api.Test;
-
-import java.util.List;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+
+import me.dzusill.core.command.CommandContext;
+import me.dzusill.core.command.CommandException;
+import me.dzusill.core.command.argument.types.IntArgument;
+import me.dzusill.core.command.argument.types.StringArgument;
 
 class ArgumentParserTest {
 
@@ -45,8 +46,7 @@ class ArgumentParserTest {
     @Test
     void missingRequiredArgumentThrows() {
         ArgumentParser parser = new ArgumentParser(SPECS);
-        assertThrows(CommandException.class,
-                () -> parser.parse(context(), new String[]{}, 0));
+        assertThrows(CommandException.class, () -> parser.parse(context(), new String[]{}, 0));
     }
 
     @Test

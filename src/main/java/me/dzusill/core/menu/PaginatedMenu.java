@@ -1,18 +1,21 @@
 package me.dzusill.core.menu;
 
-import me.dzusill.core.CorePlugin;
-import me.dzusill.core.util.ItemBuilder;
+import java.util.List;
+
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.List;
+import me.dzusill.core.CorePlugin;
+import me.dzusill.core.util.ItemBuilder;
 
 /**
- * A {@link Menu} that lays a variable-length list of {@link MenuItem}s across multiple pages and
- * wires up previous/next/close navigation automatically. Subclasses only supply the full content
- * via {@link #content()}; paging, slot placement and the navigation bar are handled here.
+ * A {@link Menu} that lays a variable-length list of {@link MenuItem}s across multiple pages and wires up
+ * previous/next/close navigation automatically. Subclasses only supply the full content via {@link #content()}; paging,
+ * slot placement and the navigation bar are handled here.
  *
- * <p>By default the bottom row is reserved for navigation and all rows above it hold content.</p>
+ * <p>
+ * By default the bottom row is reserved for navigation and all rows above it hold content.
+ * </p>
  */
 public abstract class PaginatedMenu extends Menu {
 

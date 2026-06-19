@@ -6,11 +6,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Declares a command node's identity and access rules without boilerplate. A node annotated with
- * this can use the no-arg {@code super()} constructor; the framework reads the values reflectively.
+ * Declares a command node's identity and access rules without boilerplate. A node annotated with this can use the
+ * no-arg {@code super()} constructor; the framework reads the values reflectively.
  *
  * <pre>{@code
- * @CommandMeta(name = "heal", permission = "core.heal", playerOnly = true)
+ * &#64;CommandMeta(name = "heal", permission = "core.heal", playerOnly = true)
  * public final class HealCommand extends CoreCommand { ... }
  * }</pre>
  */

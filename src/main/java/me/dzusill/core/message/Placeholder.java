@@ -4,11 +4,13 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * An ordered, immutable-ish set of placeholder substitutions applied to raw message strings
- * before MiniMessage parsing. Supports both named tokens ({@code %player%}) and positional
- * tokens ({@code {0}}), so existing config conventions keep working.
+ * An ordered, immutable-ish set of placeholder substitutions applied to raw message strings before MiniMessage parsing.
+ * Supports both named tokens ({@code %player%}) and positional tokens ({@code {0}}), so existing config conventions
+ * keep working.
  *
- * <p>Usage:
+ * <p>
+ * Usage:
+ *
  * <pre>{@code
  * Placeholder.of("player", player.getName()).and("amount", "5");
  * }</pre>
@@ -54,8 +56,7 @@ public final class Placeholder {
     }
 
     /**
-     * Applies every substitution to the given raw string, replacing both {@code %key%} and
-     * {@code {key}} forms.
+     * Applies every substitution to the given raw string, replacing both {@code %key%} and {@code {key}} forms.
      */
     public String apply(String input) {
         if (input == null || values.isEmpty()) {

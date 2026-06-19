@@ -5,8 +5,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * String helpers for command handling, most notably partial-match filtering used to build
- * tab-completion suggestions.
+ * String helpers for command handling, most notably partial-match filtering used to build tab-completion suggestions.
  */
 public final class TextUtils {
 
@@ -14,8 +13,8 @@ public final class TextUtils {
     }
 
     /**
-     * Returns the candidates that start with {@code token}, case-insensitively. Used to narrow
-     * tab-completion suggestions as the player types.
+     * Returns the candidates that start with {@code token}, case-insensitively. Used to narrow tab-completion
+     * suggestions as the player types.
      */
     public static List<String> partialMatches(String token, Collection<String> candidates) {
         List<String> matches = new ArrayList<>();
@@ -31,8 +30,8 @@ public final class TextUtils {
     }
 
     /**
-     * Joins {@code args} from {@code fromIndex} (inclusive) to the end with spaces. Useful for
-     * commands whose final argument is free-form text.
+     * Joins {@code args} from {@code fromIndex} (inclusive) to the end with spaces. Useful for commands whose final
+     * argument is free-form text.
      */
     public static String joinFrom(String[] args, int fromIndex) {
         if (fromIndex >= args.length) {

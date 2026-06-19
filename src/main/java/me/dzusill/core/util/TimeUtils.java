@@ -3,8 +3,8 @@ package me.dzusill.core.util;
 import java.time.Duration;
 
 /**
- * Formats durations into short, human-readable strings (e.g. {@code 1h 5m 3s}), primarily for
- * cooldown and remaining-time messages.
+ * Formats durations into short, human-readable strings (e.g. {@code 1h 5m 3s}), primarily for cooldown and
+ * remaining-time messages.
  */
 public final class TimeUtils {
 
@@ -12,8 +12,8 @@ public final class TimeUtils {
     }
 
     /**
-     * Formats a millisecond duration as a compact {@code Xd Yh Zm Ws} string, omitting zero units.
-     * Durations under one second render as {@code 0s}.
+     * Formats a millisecond duration as a compact {@code Xd Yh Zm Ws} string, omitting zero units. Durations under one
+     * second render as {@code 0s}.
      */
     public static String format(long millis) {
         if (millis < 1000) {

@@ -1,15 +1,15 @@
 package me.dzusill.core.database;
 
-import me.dzusill.core.CorePlugin;
-import me.dzusill.core.service.Service;
-
 import java.util.Optional;
 import java.util.concurrent.Executor;
 
+import me.dzusill.core.CorePlugin;
+import me.dzusill.core.service.Service;
+
 /**
- * Owns the active {@link Database} connection and its lifecycle. Honors the {@code enabled} toggle
- * in {@code database.yml}: when disabled, the plugin runs normally with no database, and any code
- * that needs one fails fast via {@link #database()} (or checks {@link #isEnabled()} first).
+ * Owns the active {@link Database} connection and its lifecycle. Honors the {@code enabled} toggle in
+ * {@code database.yml}: when disabled, the plugin runs normally with no database, and any code that needs one fails
+ * fast via {@link #database()} (or checks {@link #isEnabled()} first).
  */
 public final class DatabaseManager implements Service, AutoCloseable {
 
@@ -26,8 +26,8 @@ public final class DatabaseManager implements Service, AutoCloseable {
     }
 
     /**
-     * Connects and applies the schema if the database is enabled in config. Safe to call once
-     * during startup; a no-op when disabled.
+     * Connects and applies the schema if the database is enabled in config. Safe to call once during startup; a no-op
+     * when disabled.
      */
     public void start() {
         if (!config.enabled()) {
@@ -57,7 +57,8 @@ public final class DatabaseManager implements Service, AutoCloseable {
 
     /**
      * @return the active database
-     * @throws DatabaseException if the database is disabled
+     * @throws DatabaseException
+     *             if the database is disabled
      */
     public Database database() {
         if (database == null) {

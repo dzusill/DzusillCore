@@ -1,18 +1,21 @@
 package me.dzusill.core.menu.template;
 
-import me.dzusill.core.config.Config;
-import me.dzusill.core.menu.Menu;
-import me.dzusill.core.util.ItemBuilder;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.inventory.ItemStack;
 
+import me.dzusill.core.config.Config;
+import me.dzusill.core.menu.Menu;
+import me.dzusill.core.util.ItemBuilder;
+
 /**
- * A {@link MenuTemplate} defined entirely in {@code menus.yml}, so layouts (filler, border and
- * fixed decorative items) can be tuned without recompiling. This is what lets a server owner
- * restyle GUIs and a developer avoid hard-coding every decorative item.
+ * A {@link MenuTemplate} defined entirely in {@code menus.yml}, so layouts (filler, border and fixed decorative items)
+ * can be tuned without recompiling. This is what lets a server owner restyle GUIs and a developer avoid hard-coding
+ * every decorative item.
  *
- * <p>Expected YAML shape under the given path:
+ * <p>
+ * Expected YAML shape under the given path:
+ *
  * <pre>
  * example:
  *   filler:

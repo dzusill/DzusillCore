@@ -1,18 +1,18 @@
 package me.dzusill.core.config;
 
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-
 /**
- * A {@link YamlConfiguration} that preserves comments and auto-syncs missing keys from the
- * bundled resource. New keys are added, existing values are kept, and comments stay attached.
+ * A {@link YamlConfiguration} that preserves comments and auto-syncs missing keys from the bundled resource. New keys
+ * are added, existing values are kept, and comments stay attached.
  */
 public class Config extends YamlConfiguration {
 
@@ -34,8 +34,10 @@ public class Config extends YamlConfiguration {
             try {
                 f.getParentFile().mkdirs();
                 InputStream bundled = plugin.getResource(resourcePath);
-                if (bundled != null) plugin.saveResource(resourcePath, false);
-                else f.createNewFile();
+                if (bundled != null)
+                    plugin.saveResource(resourcePath, false);
+                else
+                    f.createNewFile();
             } catch (IOException ex) {
                 plugin.getLogger().warning("Could not create " + serverPath + ": " + ex.getMessage());
             }
@@ -77,7 +79,8 @@ public class Config extends YamlConfiguration {
     }
 
     public void syncWithConfig(File file, InputStream resource, String... ignoredSections) {
-        if (failed || resource == null) return;
+        if (failed || resource == null)
+            return;
         Config defaults = loadConfiguration(resource, file.getName());
         if (mergeFrom(defaults, defaults.getConfigurationSection(""), Arrays.asList(ignoredSections))) {
             save(file);
@@ -85,8 +88,10 @@ public class Config extends YamlConfiguration {
     }
 
     public void setComment(String path, String comment) {
-        if (comment == null) comments.remove(path);
-        else comments.put(path, comment);
+        if (comment == null)
+            comments.remove(path);
+        else
+            comments.put(path, comment);
     }
 
     public String getComment(String path) {
@@ -127,7 +132,8 @@ public class Config extends YamlConfiguration {
         List<String> lines = new ArrayList<>(Arrays.asList(super.saveToString().split("\n", -1)));
         injectComments(lines);
         StringBuilder sb = new StringBuilder();
-        for (String line : lines) sb.append('\n').append(line);
+        for (String line : lines)
+            sb.append('\n').append(line);
         return sb.length() == 0 ? "" : sb.substring(1);
     }
 
@@ -137,8 +143,7 @@ public class Config extends YamlConfiguration {
 
     public static Config loadConfiguration(File file) {
         try {
-            return loadConfiguration(
-                    new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8),
+            return loadConfiguration(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8),
                     file.getName());
         } catch (FileNotFoundException ex) {
             Bukkit.getLogger().warning("Config file not found: " + file.getName());
@@ -155,7 +160,8 @@ public class Config extends YamlConfiguration {
         try (BufferedReader br = reader instanceof BufferedReader b ? b : new BufferedReader(reader)) {
             StringBuilder sb = new StringBuilder();
             String line;
-            while ((line = br.readLine()) != null) sb.append(line).append('\n');
+            while ((line = br.readLine()) != null)
+                sb.append(line).append('\n');
             cfg.loadFromString(sb.toString(), name);
         } catch (IOException | InvalidConfigurationException ex) {
             Bukkit.getLogger().warning("Failed to load config " + name + ": " + ex.getMessage());
@@ -175,8 +181,8 @@ public class Config extends YamlConfiguration {
     }
 
     /**
-     * Walks the raw YAML text and maps pending comment blocks to the key path that follows them.
-     * Uses an indent-level stack to reconstruct dot-separated paths without re-parsing the tree.
+     * Walks the raw YAML text and maps pending comment blocks to the key path that follows them. Uses an indent-level
+     * stack to reconstruct dot-separated paths without re-parsing the tree.
      */
     private void parseComments(String contents) {
         String[] lines = contents.split("\n", -1);
@@ -212,8 +218,8 @@ public class Config extends YamlConfiguration {
     }
 
     /**
-     * Inserts stored comment lines into the serialized output immediately before the key they
-     * belong to, using the same indent-stack path resolution as {@link #parseComments}.
+     * Inserts stored comment lines into the serialized output immediately before the key they belong to, using the same
+     * indent-stack path resolution as {@link #parseComments}.
      */
     private void injectComments(List<String> lines) {
         Deque<int[]> indentStack = new ArrayDeque<>();
@@ -247,7 +253,8 @@ public class Config extends YamlConfiguration {
     }
 
     private boolean mergeFrom(Config source, ConfigurationSection section, List<String> ignored) {
-        if (section == null) return false;
+        if (section == null)
+            return false;
         boolean changed = false;
         for (String key : section.getKeys(false)) {
             String path = section.getCurrentPath().isEmpty() ? key : section.getCurrentPath() + "." + key;
@@ -273,7 +280,8 @@ public class Config extends YamlConfiguration {
         String[] keys = keyStack.toArray(new String[0]);
         StringBuilder sb = new StringBuilder();
         for (int i = keys.length - 1; i >= 0; i--) {
-            if (sb.length() > 0) sb.append('.');
+            if (sb.length() > 0)
+                sb.append('.');
             sb.append(keys[i]);
         }
         return sb.toString();
@@ -281,7 +289,8 @@ public class Config extends YamlConfiguration {
 
     private static int leadingSpaces(String line) {
         int count = 0;
-        while (count < line.length() && line.charAt(count) == ' ') count++;
+        while (count < line.length() && line.charAt(count) == ' ')
+            count++;
         return count;
     }
 }

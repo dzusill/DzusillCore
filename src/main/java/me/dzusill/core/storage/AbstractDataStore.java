@@ -6,12 +6,14 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Base {@link DataStore} that keeps an in-memory cache and delegates only the persistence concern
- * to subclasses via {@link #load()} and {@link #save()}. All read/write operations run against the
- * cache, giving consistent semantics regardless of the backing medium.
+ * Base {@link DataStore} that keeps an in-memory cache and delegates only the persistence concern to subclasses via
+ * {@link #load()} and {@link #save()}. All read/write operations run against the cache, giving consistent semantics
+ * regardless of the backing medium.
  *
- * @param <K> key type
- * @param <V> value type
+ * @param <K>
+ *            key type
+ * @param <V>
+ *            value type
  */
 public abstract class AbstractDataStore<K, V> implements DataStore<K, V> {
 

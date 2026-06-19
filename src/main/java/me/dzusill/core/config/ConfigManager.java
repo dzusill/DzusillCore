@@ -1,18 +1,18 @@
 package me.dzusill.core.config;
 
-import me.dzusill.core.service.Reloadable;
-import me.dzusill.core.service.Service;
-import org.bukkit.plugin.Plugin;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.bukkit.plugin.Plugin;
+
+import me.dzusill.core.service.Reloadable;
+import me.dzusill.core.service.Service;
+
 /**
- * Central registry for every YAML config the plugin owns. Lets the plugin load named raw configs
- * and typed {@link AbstractConfig} wrappers, then reload them all at once (for example from a
- * {@code /core reload} command).
+ * Central registry for every YAML config the plugin owns. Lets the plugin load named raw configs and typed
+ * {@link AbstractConfig} wrappers, then reload them all at once (for example from a {@code /core reload} command).
  */
 public final class ConfigManager implements Service, Reloadable {
 
@@ -27,7 +27,8 @@ public final class ConfigManager implements Service, Reloadable {
     /**
      * Loads (or returns the cached) raw config backed by the given file name.
      *
-     * @param fileName resource and on-disk file name (e.g. {@code "data.yml"})
+     * @param fileName
+     *            resource and on-disk file name (e.g. {@code "data.yml"})
      */
     public Config load(String fileName) {
         return rawConfigs.computeIfAbsent(fileName, name -> Config.loadConfig(plugin, name, name));
@@ -52,7 +53,8 @@ public final class ConfigManager implements Service, Reloadable {
 
     /**
      * @return a registered typed config by its class
-     * @throws IllegalStateException if the config was not registered
+     * @throws IllegalStateException
+     *             if the config was not registered
      */
     @SuppressWarnings("unchecked")
     public <T extends AbstractConfig> T get(Class<T> type) {

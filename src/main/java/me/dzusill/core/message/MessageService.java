@@ -1,29 +1,32 @@
 package me.dzusill.core.message;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.bukkit.command.CommandSender;
+import org.bukkit.plugin.Plugin;
+
 import me.dzusill.core.config.Config;
 import me.dzusill.core.service.Reloadable;
 import me.dzusill.core.service.Service;
+
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
-import org.bukkit.command.CommandSender;
-import org.bukkit.plugin.Plugin;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
- * Resolves and sends user-facing messages defined in {@code messages.yml}, parsed with
- * Adventure's MiniMessage. Centralizes prefix handling, placeholder substitution and the
- * single/list distinction so call sites never touch raw color codes or component building.
+ * Resolves and sends user-facing messages defined in {@code messages.yml}, parsed with Adventure's MiniMessage.
+ * Centralizes prefix handling, placeholder substitution and the single/list distinction so call sites never touch raw
+ * color codes or component building.
  *
- * <p>{@code CommandSender#sendMessage(Component)} is a Paper-only overload, so it's never called
- * directly here. On Paper, the live sender object implements Adventure's {@link Audience} (even
- * though our compile-time {@code CommandSender} type, from Spigot API, doesn't expose that), so
- * the {@code instanceof} check below is true and gets native Component rendering. On plain
- * Spigot/CraftBukkit it's false, and we fall back to a legacy section-sign string, which every
- * Bukkit implementation has supported since {@code sendMessage(String)} existed.</p>
+ * <p>
+ * {@code CommandSender#sendMessage(Component)} is a Paper-only overload, so it's never called directly here. On Paper,
+ * the live sender object implements Adventure's {@link Audience} (even though our compile-time {@code CommandSender}
+ * type, from Spigot API, doesn't expose that), so the {@code instanceof} check below is true and gets native Component
+ * rendering. On plain Spigot/CraftBukkit it's false, and we fall back to a legacy section-sign string, which every
+ * Bukkit implementation has supported since {@code sendMessage(String)} existed.
+ * </p>
  */
 public final class MessageService implements Service, Reloadable {
 
@@ -47,8 +50,8 @@ public final class MessageService implements Service, Reloadable {
     }
 
     /**
-     * Builds a component for the given message key. Missing keys fall back to the key itself so
-     * problems are visible in-game rather than silently swallowed.
+     * Builds a component for the given message key. Missing keys fall back to the key itself so problems are visible
+     * in-game rather than silently swallowed.
      */
     public Component get(String key, Placeholder placeholder) {
         String raw = config.getString(key, key);
@@ -94,10 +97,9 @@ public final class MessageService implements Service, Reloadable {
     }
 
     /**
-     * Sends an already-built component, cross-version safe. The one sanctioned way to send a raw
-     * {@link Component} outside this service — call sites should never call
-     * {@code CommandSender#sendMessage(Component)} directly, since that overload is Paper-only
-     * and won't even compile against plain Spigot's API.
+     * Sends an already-built component, cross-version safe. The one sanctioned way to send a raw {@link Component}
+     * outside this service — call sites should never call {@code CommandSender#sendMessage(Component)} directly, since
+     * that overload is Paper-only and won't even compile against plain Spigot's API.
      */
     public void sendComponent(CommandSender recipient, Component component) {
         if (recipient instanceof Audience audience) {

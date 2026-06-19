@@ -1,13 +1,13 @@
 package me.dzusill.core.hook;
 
-import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.RegisteredServiceProvider;
 
+import net.milkbowl.vault.economy.Economy;
+
 /**
- * Integration with Vault's economy service. When active, exposes the registered {@link Economy}
- * provider so the plugin can read balances and charge players without depending on a specific
- * economy implementation.
+ * Integration with Vault's economy service. When active, exposes the registered {@link Economy} provider so the plugin
+ * can read balances and charge players without depending on a specific economy implementation.
  */
 public final class VaultHook extends PluginHook {
 
@@ -19,8 +19,7 @@ public final class VaultHook extends PluginHook {
 
     @Override
     protected void setup() {
-        RegisteredServiceProvider<Economy> registration =
-                Bukkit.getServicesManager().getRegistration(Economy.class);
+        RegisteredServiceProvider<Economy> registration = Bukkit.getServicesManager().getRegistration(Economy.class);
         if (registration != null) {
             this.economy = registration.getProvider();
         }

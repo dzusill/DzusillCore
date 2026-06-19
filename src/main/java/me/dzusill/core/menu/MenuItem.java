@@ -1,14 +1,13 @@
 package me.dzusill.core.menu;
 
+import java.util.function.Consumer;
+
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.function.Consumer;
-
 /**
- * Pairs the visual {@link ItemStack} shown in a slot with the behaviour triggered when it is
- * clicked. Click handling is per-item (a {@link Consumer}) rather than a central switch, so menus
- * stay declarative and slots are self-contained.
+ * Pairs the visual {@link ItemStack} shown in a slot with the behaviour triggered when it is clicked. Click handling is
+ * per-item (a {@link Consumer}) rather than a central switch, so menus stay declarative and slots are self-contained.
  */
 public final class MenuItem {
 

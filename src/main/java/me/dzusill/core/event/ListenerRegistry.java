@@ -1,14 +1,14 @@
 package me.dzusill.core.event;
 
-import me.dzusill.core.CorePlugin;
-import me.dzusill.core.service.Service;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 
+import me.dzusill.core.CorePlugin;
+import me.dzusill.core.service.Service;
+
 /**
- * Central registration point for event listeners. Registering through one service keeps the
- * plugin's {@code onEnable} free of repetitive {@code registerEvents} calls and gives a single
- * place to unregister everything on shutdown.
+ * Central registration point for event listeners. Registering through one service keeps the plugin's {@code onEnable}
+ * free of repetitive {@code registerEvents} calls and gives a single place to unregister everything on shutdown.
  */
 public final class ListenerRegistry implements Service {
 

@@ -1,20 +1,21 @@
 package me.dzusill.core.command.argument.types;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
+
 import me.dzusill.core.command.CommandContext;
 import me.dzusill.core.command.CommandException;
 import me.dzusill.core.command.argument.ArgumentType;
 import me.dzusill.core.message.Messages;
 import me.dzusill.core.message.Placeholder;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
-
 /**
- * Parses a token into a constant of the given enum, case-insensitively, and suggests all of the
- * enum's constants (lower-cased) for autocomplete.
+ * Parses a token into a constant of the given enum, case-insensitively, and suggests all of the enum's constants
+ * (lower-cased) for autocomplete.
  *
- * @param <E> the enum type
+ * @param <E>
+ *            the enum type
  */
 public final class EnumArgument<E extends Enum<E>> implements ArgumentType<E> {
 
@@ -35,8 +36,7 @@ public final class EnumArgument<E extends Enum<E>> implements ArgumentType<E> {
 
     @Override
     public List<String> suggest(CommandContext context, String token) {
-        return Arrays.stream(enumType.getEnumConstants())
-                .map(constant -> constant.name().toLowerCase(Locale.ROOT))
+        return Arrays.stream(enumType.getEnumConstants()).map(constant -> constant.name().toLowerCase(Locale.ROOT))
                 .toList();
     }
 

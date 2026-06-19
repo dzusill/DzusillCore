@@ -5,8 +5,8 @@ import java.util.Locale;
 import java.util.Optional;
 
 /**
- * Numeric helpers: safe parsing that never throws, and compact abbreviation of large numbers
- * (e.g. {@code 1.2K}, {@code 3.4M}).
+ * Numeric helpers: safe parsing that never throws, and compact abbreviation of large numbers (e.g. {@code 1.2K},
+ * {@code 3.4M}).
  */
 public final class NumberUtils {
 

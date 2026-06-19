@@ -4,8 +4,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 /**
- * A generic, type-safe cooldown tracker keyed by any identifier (commonly a player {@code UUID}).
- * Each feature owns its own instance with a fixed duration, replacing scattered timestamp maps.
+ * A generic, type-safe cooldown tracker keyed by any identifier (commonly a player {@code UUID}). Each feature owns its
+ * own instance with a fixed duration, replacing scattered timestamp maps.
  *
  * <pre>{@code
  * CooldownManager<UUID> teleport = new CooldownManager<>(3, TimeUnit.SECONDS);
@@ -13,7 +13,8 @@ import java.util.concurrent.TimeUnit;
  * teleport.start(player.getUniqueId());
  * }</pre>
  *
- * @param <K> the cooldown key type
+ * @param <K>
+ *            the cooldown key type
  */
 public final class CooldownManager<K> {
 

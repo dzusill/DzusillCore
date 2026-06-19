@@ -1,6 +1,8 @@
 package me.dzusill.core.util;
 
-import be.seeseemelk.mockbukkit.MockBukkit;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
@@ -8,8 +10,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import be.seeseemelk.mockbukkit.MockBukkit;
 
 class ItemBuilderTest {
 
@@ -25,10 +26,8 @@ class ItemBuilderTest {
 
     @Test
     void buildsItemWithAmountNameAndLore() {
-        ItemStack item = new ItemBuilder(Material.DIAMOND, 3)
-                .name("<aqua>Shiny")
-                .lore("<gray>Line one", "<gray>Line two")
-                .build();
+        ItemStack item = new ItemBuilder(Material.DIAMOND, 3).name("<aqua>Shiny")
+                .lore("<gray>Line one", "<gray>Line two").build();
 
         assertEquals(Material.DIAMOND, item.getType());
         assertEquals(3, item.getAmount());

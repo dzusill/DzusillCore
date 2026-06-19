@@ -1,13 +1,14 @@
 package me.dzusill.core.menu.template;
 
-import me.dzusill.core.menu.Menu;
-import me.dzusill.core.util.ItemBuilder;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
+import me.dzusill.core.menu.Menu;
+import me.dzusill.core.util.ItemBuilder;
+
 /**
- * Factory of ready-made {@link MenuTemplate}s. These are size-agnostic, so the same template works
- * for any inventory size, letting menus opt into a standard look with a single line.
+ * Factory of ready-made {@link MenuTemplate}s. These are size-agnostic, so the same template works for any inventory
+ * size, letting menus opt into a standard look with a single line.
  */
 public final class Templates {
 

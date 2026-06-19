@@ -1,15 +1,14 @@
 package me.dzusill.core.database;
 
-import me.dzusill.core.database.query.Statements;
-
 import java.util.List;
 import java.util.stream.Collectors;
 
+import me.dzusill.core.database.query.Statements;
+
 /**
- * Enumerates the supported SQL backends and encapsulates everything that differs between them:
- * the JDBC driver class, the URL format, the default port and the dialect-specific "upsert"
- * statement. New backends (e.g. SQLite) are added by introducing a new constant, keeping the rest
- * of the database layer untouched.
+ * Enumerates the supported SQL backends and encapsulates everything that differs between them: the JDBC driver class,
+ * the URL format, the default port and the dialect-specific "upsert" statement. New backends (e.g. SQLite) are added by
+ * introducing a new constant, keeping the rest of the database layer untouched.
  */
 public enum DatabaseType {
 
@@ -21,10 +20,8 @@ public enum DatabaseType {
 
         @Override
         public String upsert(String table, List<String> columns, List<String> keyColumns) {
-            String updates = columns.stream()
-                    .filter(column -> !keyColumns.contains(column))
-                    .map(column -> column + " = VALUES(" + column + ")")
-                    .collect(Collectors.joining(", "));
+            String updates = columns.stream().filter(column -> !keyColumns.contains(column))
+                    .map(column -> column + " = VALUES(" + column + ")").collect(Collectors.joining(", "));
             return "INSERT INTO " + table + " (" + Statements.columns(columns) + ") VALUES ("
                     + Statements.placeholders(columns.size()) + ") ON DUPLICATE KEY UPDATE " + updates;
         }
@@ -38,13 +35,11 @@ public enum DatabaseType {
 
         @Override
         public String upsert(String table, List<String> columns, List<String> keyColumns) {
-            String updates = columns.stream()
-                    .filter(column -> !keyColumns.contains(column))
-                    .map(column -> column + " = EXCLUDED." + column)
-                    .collect(Collectors.joining(", "));
+            String updates = columns.stream().filter(column -> !keyColumns.contains(column))
+                    .map(column -> column + " = EXCLUDED." + column).collect(Collectors.joining(", "));
             return "INSERT INTO " + table + " (" + Statements.columns(columns) + ") VALUES ("
-                    + Statements.placeholders(columns.size()) + ") ON CONFLICT ("
-                    + Statements.columns(keyColumns) + ") DO UPDATE SET " + updates;
+                    + Statements.placeholders(columns.size()) + ") ON CONFLICT (" + Statements.columns(keyColumns)
+                    + ") DO UPDATE SET " + updates;
         }
     };
 
@@ -64,9 +59,12 @@ public enum DatabaseType {
     /**
      * Builds an insert-or-update statement for the dialect.
      *
-     * @param table      target table
-     * @param columns    all inserted columns, in order
-     * @param keyColumns the subset of {@code columns} forming the conflict/primary key
+     * @param table
+     *            target table
+     * @param columns
+     *            all inserted columns, in order
+     * @param keyColumns
+     *            the subset of {@code columns} forming the conflict/primary key
      */
     public abstract String upsert(String table, List<String> columns, List<String> keyColumns);
 
@@ -81,7 +79,8 @@ public enum DatabaseType {
     /**
      * Resolves a type from its config name, case-insensitively.
      *
-     * @throws DatabaseException if the name is not a known type
+     * @throws DatabaseException
+     *             if the name is not a known type
      */
     public static DatabaseType fromString(String name) {
         for (DatabaseType type : values()) {

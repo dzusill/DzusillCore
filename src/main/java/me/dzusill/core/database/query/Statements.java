@@ -6,9 +6,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Small helpers for building and binding prepared statements: generating placeholder lists,
- * joining column names, and binding positional parameters. Shared by the database and repository
- * layers to keep statement construction DRY.
+ * Small helpers for building and binding prepared statements: generating placeholder lists, joining column names, and
+ * binding positional parameters. Shared by the database and repository layers to keep statement construction DRY.
  */
 public final class Statements {
 

@@ -1,28 +1,29 @@
 package me.dzusill.core.command;
 
-import be.seeseemelk.mockbukkit.MockBukkit;
-import be.seeseemelk.mockbukkit.ServerMock;
-import be.seeseemelk.mockbukkit.entity.PlayerMock;
-import me.dzusill.core.CorePlugin;
-import me.dzusill.core.command.argument.Arguments;
-import me.dzusill.core.command.meta.CommandMeta;
-import me.dzusill.core.example.ExamplePlugin;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import me.dzusill.core.CorePlugin;
+import me.dzusill.core.command.argument.Arguments;
+import me.dzusill.core.command.meta.CommandMeta;
+import me.dzusill.core.example.ExamplePlugin;
+
+import be.seeseemelk.mockbukkit.MockBukkit;
+import be.seeseemelk.mockbukkit.ServerMock;
+import be.seeseemelk.mockbukkit.entity.PlayerMock;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+
 /**
- * A command body can throw something other than {@link CommandException} (a bug, or — as happened
- * in production — a {@link NoClassDefFoundError} from an optional dependency reached at runtime).
- * {@link CoreCommand#onCommand} must contain that, not let it propagate into Bukkit/Brigadier where
- * it would otherwise reach the server's tick loop as an unhandled {@code Error} and crash the
- * whole server instead of just failing the one command.
+ * A command body can throw something other than {@link CommandException} (a bug, or — as happened in production — a
+ * {@link NoClassDefFoundError} from an optional dependency reached at runtime). {@link CoreCommand#onCommand} must
+ * contain that, not let it propagate into Bukkit/Brigadier where it would otherwise reach the server's tick loop as an
+ * unhandled {@code Error} and crash the whole server instead of just failing the one command.
  */
 class CoreCommandTest {
 

@@ -1,5 +1,11 @@
 package me.dzusill.core.command;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
 import me.dzusill.core.command.argument.ArgumentParser;
 import me.dzusill.core.command.argument.ArgumentType;
 import me.dzusill.core.command.argument.Arguments;
@@ -8,22 +14,17 @@ import me.dzusill.core.message.Messages;
 import me.dzusill.core.message.Placeholder;
 import me.dzusill.core.util.TextUtils;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-
 /**
- * A single node in a command tree. A node can either route to child nodes (acting as a group such
- * as {@code /core ...}) or be a leaf that declares typed arguments and does work in {@link #run}.
- * The same class powers both, so the whole tree is handled polymorphically: permission and
- * player-only checks, argument parsing and tab-completion all live here and are inherited by every
- * concrete command.
+ * A single node in a command tree. A node can either route to child nodes (acting as a group such as {@code /core ...})
+ * or be a leaf that declares typed arguments and does work in {@link #run}. The same class powers both, so the whole
+ * tree is handled polymorphically: permission and player-only checks, argument parsing and tab-completion all live here
+ * and are inherited by every concrete command.
  *
- * <p>Configure a node from its subclass constructor using {@link #permission(String)},
- * {@link #playerOnly()}, {@link #arg}, {@link #optionalArg} and {@link #child(SubCommand)}, or
- * annotate the class with {@link CommandMeta} and use the no-arg constructor.</p>
+ * <p>
+ * Configure a node from its subclass constructor using {@link #permission(String)}, {@link #playerOnly()},
+ * {@link #arg}, {@link #optionalArg} and {@link #child(SubCommand)}, or annotate the class with {@link CommandMeta} and
+ * use the no-arg constructor.
+ * </p>
  */
 public abstract class SubCommand {
 
@@ -38,13 +39,14 @@ public abstract class SubCommand {
     /**
      * Configures the node from a {@link CommandMeta} annotation on the concrete class.
      *
-     * @throws IllegalStateException if the class is not annotated
+     * @throws IllegalStateException
+     *             if the class is not annotated
      */
     protected SubCommand() {
         CommandMeta meta = getClass().getAnnotation(CommandMeta.class);
         if (meta == null) {
-            throw new IllegalStateException(getClass().getName()
-                    + " must be annotated with @CommandMeta or call super(name)");
+            throw new IllegalStateException(
+                    getClass().getName() + " must be annotated with @CommandMeta or call super(name)");
         }
         this.name = meta.name().toLowerCase(Locale.ROOT);
         this.description = meta.description();
@@ -113,18 +115,20 @@ public abstract class SubCommand {
     // --- execution ----------------------------------------------------------
 
     /**
-     * Runs this node's logic. For pure routing nodes, override to show help; for leaf nodes,
-     * implement the actual behaviour using the already-parsed {@code args}.
+     * Runs this node's logic. For pure routing nodes, override to show help; for leaf nodes, implement the actual
+     * behaviour using the already-parsed {@code args}.
      *
-     * @param offsetArgs arguments parsed from this node's declared specs
+     * @param offsetArgs
+     *            arguments parsed from this node's declared specs
      */
     public abstract void run(CommandContext context, Arguments offsetArgs) throws CommandException;
 
     /**
-     * Validates access, routes to a child if one matches, otherwise parses this node's arguments
-     * and invokes {@link #run}.
+     * Validates access, routes to a child if one matches, otherwise parses this node's arguments and invokes
+     * {@link #run}.
      *
-     * @param offset index of the first token belonging to this node
+     * @param offset
+     *            index of the first token belonging to this node
      */
     final void execute(CommandContext context, int offset) throws CommandException {
         if (!permission.isEmpty() && !context.sender().hasPermission(permission)) {

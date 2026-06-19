@@ -1,7 +1,5 @@
 package me.dzusill.core.nms.reflect;
 
-import org.bukkit.Bukkit;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -9,15 +7,17 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.bukkit.Bukkit;
+
 /**
- * Small reflection toolkit shared by NMS adapters. It resolves CraftBukkit and {@code net.minecraft}
- * classes across the two breakpoints in the supported range and caches member lookups so adapters
- * stay terse. This is the same {@code getHandle()} + private-field style used by
- * {@code me.dzusill.core.util.SkullTextures}, generalised for reuse.
+ * Small reflection toolkit shared by NMS adapters. It resolves CraftBukkit and {@code net.minecraft} classes across the
+ * two breakpoints in the supported range and caches member lookups so adapters stay terse. This is the same
+ * {@code getHandle()} + private-field style used by {@code me.dzusill.core.util.SkullTextures}, generalised for reuse.
  *
- * <p>The CraftBukkit base package is resolved lazily on first use (not in a static initialiser) so
- * the class can load under MockBukkit, where {@link Bukkit#getServer()} may be unset until a test
- * mocks it.</p>
+ * <p>
+ * The CraftBukkit base package is resolved lazily on first use (not in a static initialiser) so the class can load
+ * under MockBukkit, where {@link Bukkit#getServer()} may be unset until a test mocks it.
+ * </p>
  */
 public final class Reflection {
 
@@ -29,8 +29,8 @@ public final class Reflection {
     }
 
     /**
-     * @return the server's CraftBukkit base package, e.g. {@code org.bukkit.craftbukkit.v1_16_R3}
-     * (≤1.20.4) or {@code org.bukkit.craftbukkit} (1.20.5+)
+     * @return the server's CraftBukkit base package, e.g. {@code org.bukkit.craftbukkit.v1_16_R3} (≤1.20.4) or
+     *         {@code org.bukkit.craftbukkit} (1.20.5+)
      */
     public static String craftBukkitPackage() {
         String cached = CRAFT_BUKKIT_PACKAGE.get();
@@ -49,8 +49,8 @@ public final class Reflection {
     }
 
     /**
-     * Loads a class by fully-qualified name, returning empty instead of throwing when absent. Useful
-     * for trying a Mojang-mapped name and falling back to a Spigot-mapped one.
+     * Loads a class by fully-qualified name, returning empty instead of throwing when absent. Useful for trying a
+     * Mojang-mapped name and falling back to a Spigot-mapped one.
      */
     public static Optional<Class<?>> optionalClass(String fullyQualifiedName) {
         try {

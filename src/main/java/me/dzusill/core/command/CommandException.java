@@ -3,9 +3,8 @@ package me.dzusill.core.command;
 import me.dzusill.core.message.Placeholder;
 
 /**
- * A controlled, user-facing command failure. Instead of sending messages from deep inside parse
- * or run logic, code throws this with a {@code messages.yml} key; the command dispatcher catches
- * it and renders the message uniformly.
+ * A controlled, user-facing command failure. Instead of sending messages from deep inside parse or run logic, code
+ * throws this with a {@code messages.yml} key; the command dispatcher catches it and renders the message uniformly.
  */
 public class CommandException extends Exception {
 

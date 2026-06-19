@@ -1,22 +1,24 @@
 package me.dzusill.core.menu;
 
-import be.seeseemelk.mockbukkit.MockBukkit;
-import be.seeseemelk.mockbukkit.ServerMock;
-import me.dzusill.core.CorePlugin;
-import me.dzusill.core.example.ExamplePlugin;
-import me.dzusill.core.menu.meta.MenuMeta;
-import me.dzusill.core.util.ColorUtils;
-import net.kyori.adventure.text.Component;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import me.dzusill.core.CorePlugin;
+import me.dzusill.core.example.ExamplePlugin;
+import me.dzusill.core.menu.meta.MenuMeta;
+import me.dzusill.core.util.ColorUtils;
+
+import be.seeseemelk.mockbukkit.MockBukkit;
+import be.seeseemelk.mockbukkit.ServerMock;
+import net.kyori.adventure.text.Component;
 
 /**
- * Verifies {@link MenuMeta} drives {@code title()/size()/permission()} the same way
- * {@code @CommandMeta} drives a command node, while leaving the override path intact.
+ * Verifies {@link MenuMeta} drives {@code title()/size()/permission()} the same way {@code @CommandMeta} drives a
+ * command node, while leaving the override path intact.
  */
 class MenuMetaTest {
 

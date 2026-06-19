@@ -1,15 +1,16 @@
 package me.dzusill.core.database;
 
-import me.dzusill.core.config.AbstractConfig;
-import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.plugin.Plugin;
-
 import java.util.HashMap;
 import java.util.Map;
 
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.plugin.Plugin;
+
+import me.dzusill.core.config.AbstractConfig;
+
 /**
- * Typed view over {@code database.yml}. Keeps connection settings (and their defaults) in one
- * place and produces the {@link DatabaseCredentials} consumed by the {@link DatabaseManager}.
+ * Typed view over {@code database.yml}. Keeps connection settings (and their defaults) in one place and produces the
+ * {@link DatabaseCredentials} consumed by the {@link DatabaseManager}.
  */
 public final class DatabaseConfig extends AbstractConfig {
 
@@ -36,15 +37,10 @@ public final class DatabaseConfig extends AbstractConfig {
      */
     public DatabaseCredentials credentials() {
         DatabaseType type = type();
-        return new DatabaseCredentials(
-                raw().getString("host", "localhost"),
-                raw().getInt("port", type.defaultPort()),
-                raw().getString("database", "minecraft"),
-                raw().getString("username", "root"),
-                raw().getString("password", ""),
-                raw().getInt("pool.maximum-pool-size", 10),
-                raw().getLong("pool.connection-timeout-ms", 30000L),
-                readProperties());
+        return new DatabaseCredentials(raw().getString("host", "localhost"), raw().getInt("port", type.defaultPort()),
+                raw().getString("database", "minecraft"), raw().getString("username", "root"),
+                raw().getString("password", ""), raw().getInt("pool.maximum-pool-size", 10),
+                raw().getLong("pool.connection-timeout-ms", 30000L), readProperties());
     }
 
     private Map<String, String> readProperties() {

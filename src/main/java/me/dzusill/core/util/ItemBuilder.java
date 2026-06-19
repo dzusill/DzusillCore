@@ -1,7 +1,10 @@
 package me.dzusill.core.util;
 
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
+
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -12,22 +15,16 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.persistence.PersistentDataType;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 /**
- * Fluent builder for {@link ItemStack}s. Replaces ad-hoc {@code makeItem}/{@code makeHead}
- * helpers with a single chainable API that handles MiniMessage names/lore, glow, item flags,
- * custom-textured skulls and persistent-data tagging.
+ * Fluent builder for {@link ItemStack}s. Replaces ad-hoc {@code makeItem}/{@code makeHead} helpers with a single
+ * chainable API that handles MiniMessage names/lore, glow, item flags, custom-textured skulls and persistent-data
+ * tagging.
  *
  * <pre>{@code
- * ItemStack icon = new ItemBuilder(Material.DIAMOND)
- *         .name("<aqua>Shiny")
- *         .lore("<gray>Click to buy")
- *         .glow()
- *         .build();
+ * ItemStack icon = new ItemBuilder(Material.DIAMOND).name("<aqua>Shiny").lore("<gray>Click to buy").glow().build();
  * }</pre>
  */
 public final class ItemBuilder {
@@ -52,14 +49,12 @@ public final class ItemBuilder {
     }
 
     /**
-     * Starts a builder for a custom-textured player head from a base64 textures value (the long
-     * string used by head databases / warp GUIs, encoding {@code {"textures":{"SKIN":{"url":...}}}}).
-     * Convenience for {@code new ItemBuilder(Material.PLAYER_HEAD).skull(base64Texture)}.
+     * Starts a builder for a custom-textured player head from a base64 textures value (the long string used by head
+     * databases / warp GUIs, encoding {@code {"textures":{"SKIN":{"url":...}}}}). Convenience for
+     * {@code new ItemBuilder(Material.PLAYER_HEAD).skull(base64Texture)}.
      *
      * <pre>{@code
-     * ItemStack plus = ItemBuilder.head("eyJ0ZXh0dXJlcyI6...")
-     *         .name("<green>Add")
-     *         .build();
+     * ItemStack plus = ItemBuilder.head("eyJ0ZXh0dXJlcyI6...").name("<green>Add").build();
      * }</pre>
      */
     public static ItemBuilder head(String base64Texture) {
@@ -80,9 +75,8 @@ public final class ItemBuilder {
 
     /**
      * Sets the display name from a component, serialized to a legacy section-sign string.
-     * {@code ItemMeta#displayName(Component)} is a Paper-only overload; legacy
-     * {@code setDisplayName(String)} renders identically on the client and exists on every
-     * Bukkit implementation back to 1.8.
+     * {@code ItemMeta#displayName(Component)} is a Paper-only overload; legacy {@code setDisplayName(String)} renders
+     * identically on the client and exists on every Bukkit implementation back to 1.8.
      */
     public ItemBuilder name(Component component) {
         meta.setDisplayName(LEGACY_SECTION.serialize(component));
@@ -127,7 +121,8 @@ public final class ItemBuilder {
     /**
      * Sets the skull owner by UUID so the server renders that player's skin.
      *
-     * @throws IllegalStateException if this builder is not for a {@link SkullMeta} item
+     * @throws IllegalStateException
+     *             if this builder is not for a {@link SkullMeta} item
      */
     public ItemBuilder skullOwner(UUID uuid) {
         if (!(meta instanceof SkullMeta skullMeta)) {
@@ -140,7 +135,8 @@ public final class ItemBuilder {
     /**
      * Applies a base64 texture value to a player-head item.
      *
-     * @throws IllegalStateException if this builder is not for a {@link SkullMeta} item
+     * @throws IllegalStateException
+     *             if this builder is not for a {@link SkullMeta} item
      */
     public ItemBuilder skull(String base64Texture) {
         if (!(meta instanceof SkullMeta skullMeta)) {

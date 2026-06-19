@@ -5,9 +5,9 @@ import me.dzusill.core.service.Service;
 import me.dzusill.core.service.ServiceRegistry;
 
 /**
- * Convenience base class for {@link CoreModule} implementations. Provides typed access to the
- * owning {@link CorePlugin} and shortcuts for publishing and resolving services, so concrete
- * modules only implement the behaviour that is unique to them.
+ * Convenience base class for {@link CoreModule} implementations. Provides typed access to the owning {@link CorePlugin}
+ * and shortcuts for publishing and resolving services, so concrete modules only implement the behaviour that is unique
+ * to them.
  */
 public abstract class AbstractModule implements CoreModule {
 

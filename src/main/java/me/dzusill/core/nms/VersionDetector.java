@@ -1,17 +1,17 @@
 package me.dzusill.core.nms;
 
-import org.bukkit.Bukkit;
-import org.bukkit.Server;
-
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.bukkit.Bukkit;
+import org.bukkit.Server;
+
 /**
- * Detects the {@link MinecraftVersion} of the running server, robust across the whole 1.16.5–1.21.x
- * range. The legacy {@code vX_Y_RZ} CraftBukkit package suffix is <em>not</em> used as the primary
- * signal because it disappeared on Paper 1.20.5+; it is only captured opportunistically into
- * {@link MinecraftVersion#craftBukkitTag()} for adapters that still rely on it.
+ * Detects the {@link MinecraftVersion} of the running server, robust across the whole 1.16.5–1.21.x range. The legacy
+ * {@code vX_Y_RZ} CraftBukkit package suffix is <em>not</em> used as the primary signal because it disappeared on Paper
+ * 1.20.5+; it is only captured opportunistically into {@link MinecraftVersion#craftBukkitTag()} for adapters that still
+ * rely on it.
  */
 public final class VersionDetector {
 
@@ -27,8 +27,9 @@ public final class VersionDetector {
     /**
      * Detects the running server's version.
      *
-     * @throws IllegalStateException if no version string could be parsed (should never happen on a
-     *                               real server; indicates the API contract changed)
+     * @throws IllegalStateException
+     *             if no version string could be parsed (should never happen on a real server; indicates the API
+     *             contract changed)
      */
     public static MinecraftVersion detect() {
         return detect(Bukkit.getServer());
@@ -50,8 +51,8 @@ public final class VersionDetector {
     }
 
     /**
-     * Modern Paper exposes {@code Server#getMinecraftVersion()} returning a clean "1.21.1". We call it
-     * reflectively because the framework compiles against Spigot 1.16.5, which has no such method.
+     * Modern Paper exposes {@code Server#getMinecraftVersion()} returning a clean "1.21.1". We call it reflectively
+     * because the framework compiles against Spigot 1.16.5, which has no such method.
      */
     private static Optional<String> paperMinecraftVersion(Server server) {
         try {

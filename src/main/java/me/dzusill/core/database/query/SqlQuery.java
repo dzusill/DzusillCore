@@ -4,9 +4,8 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * An immutable pairing of a parameterized SQL string and its positional parameters. Bundling them
- * keeps a statement and its bindings together when passing queries around (e.g. from a repository
- * to the database).
+ * An immutable pairing of a parameterized SQL string and its positional parameters. Bundling them keeps a statement and
+ * its bindings together when passing queries around (e.g. from a repository to the database).
  */
 public final class SqlQuery {
 

@@ -1,15 +1,16 @@
 package me.dzusill.core.storage;
 
-import me.dzusill.core.config.Config;
-
 import java.util.function.Function;
 
+import me.dzusill.core.config.Config;
+
 /**
- * A YAML-backed {@link DataStore} keyed by string under a base path. Values are converted to and
- * from the YAML primitive representation by the supplied serializer/deserializer, so the same
- * store works for any value type (e.g. a serialized location string, a number, a model).
+ * A YAML-backed {@link DataStore} keyed by string under a base path. Values are converted to and from the YAML
+ * primitive representation by the supplied serializer/deserializer, so the same store works for any value type (e.g. a
+ * serialized location string, a number, a model).
  *
- * @param <V> value type
+ * @param <V>
+ *            value type
  */
 public final class YamlDataStore<V> extends AbstractDataStore<String, V> {
 
@@ -19,13 +20,17 @@ public final class YamlDataStore<V> extends AbstractDataStore<String, V> {
     private final Function<Object, V> deserializer;
 
     /**
-     * @param config       backing config (already loaded)
-     * @param basePath     section under which entries are stored
-     * @param serializer   converts a value to a YAML-storable object
-     * @param deserializer reconstructs a value from its stored object
+     * @param config
+     *            backing config (already loaded)
+     * @param basePath
+     *            section under which entries are stored
+     * @param serializer
+     *            converts a value to a YAML-storable object
+     * @param deserializer
+     *            reconstructs a value from its stored object
      */
-    public YamlDataStore(Config config, String basePath,
-                         Function<V, Object> serializer, Function<Object, V> deserializer) {
+    public YamlDataStore(Config config, String basePath, Function<V, Object> serializer,
+            Function<Object, V> deserializer) {
         this.config = config;
         this.basePath = basePath;
         this.serializer = serializer;

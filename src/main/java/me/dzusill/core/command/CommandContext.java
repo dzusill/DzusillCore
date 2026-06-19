@@ -1,14 +1,15 @@
 package me.dzusill.core.command;
 
-import me.dzusill.core.CorePlugin;
-import me.dzusill.core.message.MessageService;
-import me.dzusill.core.message.Placeholder;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import me.dzusill.core.CorePlugin;
+import me.dzusill.core.message.MessageService;
+import me.dzusill.core.message.Placeholder;
+
 /**
- * Per-invocation context handed to command nodes. Bundles the sender, the raw arguments and the
- * label, plus convenience accessors and a shortcut for replying through the {@link MessageService}.
+ * Per-invocation context handed to command nodes. Bundles the sender, the raw arguments and the label, plus convenience
+ * accessors and a shortcut for replying through the {@link MessageService}.
  */
 public final class CommandContext {
 
@@ -18,7 +19,8 @@ public final class CommandContext {
     private final String label;
     private final String[] args;
 
-    public CommandContext(CorePlugin plugin, CommandSender sender, MessageService messages, String label, String[] args) {
+    public CommandContext(CorePlugin plugin, CommandSender sender, MessageService messages, String label,
+            String[] args) {
         this.plugin = plugin;
         this.sender = sender;
         this.messages = messages;
@@ -62,8 +64,8 @@ public final class CommandContext {
     }
 
     /**
-     * @return the sender cast to {@link Player}; only call after checking {@link #isPlayer()} or
-     *         when the command is declared player-only
+     * @return the sender cast to {@link Player}; only call after checking {@link #isPlayer()} or when the command is
+     *         declared player-only
      */
     public Player player() {
         return (Player) sender;

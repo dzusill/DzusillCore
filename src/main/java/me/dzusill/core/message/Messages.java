@@ -1,10 +1,9 @@
 package me.dzusill.core.message;
 
 /**
- * Centralized, typed keys for the framework's built-in messages. Keeping keys here (rather than
- * inlining raw strings at call sites) means a rename or restructure of {@code messages.yml}
- * touches exactly one place. Plugins built on the framework should define their own equivalent
- * constants class.
+ * Centralized, typed keys for the framework's built-in messages. Keeping keys here (rather than inlining raw strings at
+ * call sites) means a rename or restructure of {@code messages.yml} touches exactly one place. Plugins built on the
+ * framework should define their own equivalent constants class.
  */
 public final class Messages {
 

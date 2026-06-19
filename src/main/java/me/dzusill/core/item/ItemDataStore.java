@@ -1,22 +1,25 @@
 package me.dzusill.core.item;
 
-import org.bukkit.inventory.ItemStack;
-
 import java.util.Set;
+
+import org.bukkit.inventory.ItemStack;
 
 /**
  * Reads and writes small, typed values directly on an {@link ItemStack} (the analogue of
- * {@code PersistentDataContainer} for items, exposed as a tiny key/value API). This is the missing
- * counterpart to the player-record {@code storage}/{@code database} layers: it covers plugins that
- * persist state <em>on the item itself</em> (durability counters, ownership tags, stat trackers).
+ * {@code PersistentDataContainer} for items, exposed as a tiny key/value API). This is the missing counterpart to the
+ * player-record {@code storage}/{@code database} layers: it covers plugins that persist state <em>on the item
+ * itself</em> (durability counters, ownership tags, stat trackers).
  *
- * <p>Implementations are provider-agnostic. {@link PdcItemDataStore} uses the native Bukkit
- * persistent-data container (no external dependency, the default) while {@link NbtApiItemDataStore}
- * uses NBTAPI for plugins that need raw, un-namespaced NBT keys (e.g. to keep an existing item
- * format readable across versions).</p>
+ * <p>
+ * Implementations are provider-agnostic. {@link PdcItemDataStore} uses the native Bukkit persistent-data container (no
+ * external dependency, the default) while {@link NbtApiItemDataStore} uses NBTAPI for plugins that need raw,
+ * un-namespaced NBT keys (e.g. to keep an existing item format readable across versions).
+ * </p>
  *
- * <p>ItemStacks are value types: every mutating method returns the updated stack, which callers must
- * use in place of the original.</p>
+ * <p>
+ * ItemStacks are value types: every mutating method returns the updated stack, which callers must use in place of the
+ * original.
+ * </p>
  */
 public interface ItemDataStore {
 

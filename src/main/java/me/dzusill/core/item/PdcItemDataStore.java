@@ -1,5 +1,9 @@
 package me.dzusill.core.item;
 
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Set;
+
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -7,18 +11,14 @@ import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
 
-import java.util.HashSet;
-import java.util.Locale;
-import java.util.Set;
-
 /**
- * Native {@link ItemDataStore} backed by the Bukkit {@link PersistentDataContainer}. The default,
- * dependency-free implementation: keys are namespaced to the owning plugin, so they never collide
- * with vanilla NBT or other plugins.
+ * Native {@link ItemDataStore} backed by the Bukkit {@link PersistentDataContainer}. The default, dependency-free
+ * implementation: keys are namespaced to the owning plugin, so they never collide with vanilla NBT or other plugins.
  *
- * <p>Keys are normalised to lower case to satisfy {@link NamespacedKey}'s charset; choose
- * {@link NbtApiItemDataStore} instead when an existing item format relies on raw, case-sensitive
- * NBT root tags.</p>
+ * <p>
+ * Keys are normalised to lower case to satisfy {@link NamespacedKey}'s charset; choose {@link NbtApiItemDataStore}
+ * instead when an existing item format relies on raw, case-sensitive NBT root tags.
+ * </p>
  */
 public final class PdcItemDataStore implements ItemDataStore {
 

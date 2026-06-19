@@ -8,8 +8,8 @@ import me.dzusill.core.message.Placeholder;
 import me.dzusill.core.util.NumberUtils;
 
 /**
- * Parses an integer, optionally clamped to an inclusive {@code [min, max]} range. Invalid input
- * or out-of-range values raise a {@link CommandException} with a user-facing message.
+ * Parses an integer, optionally clamped to an inclusive {@code [min, max]} range. Invalid input or out-of-range values
+ * raise a {@link CommandException} with a user-facing message.
  */
 public final class IntArgument implements ArgumentType<Integer> {
 

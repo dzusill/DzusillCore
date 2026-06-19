@@ -1,18 +1,18 @@
 package me.dzusill.core.example.module;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import me.dzusill.core.CorePlugin;
 import me.dzusill.core.database.DatabaseConfig;
 import me.dzusill.core.database.DatabaseManager;
 import me.dzusill.core.module.AbstractModule;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
-
 /**
- * Starts the database subsystem and publishes the {@link DatabaseManager}. The manager honors the
- * {@code enabled} toggle in {@code database.yml}, so this module is safe to include even when no
- * database is configured. Enabled after the foundation module so the async executor is available.
+ * Starts the database subsystem and publishes the {@link DatabaseManager}. The manager honors the {@code enabled}
+ * toggle in {@code database.yml}, so this module is safe to include even when no database is configured. Enabled after
+ * the foundation module so the async executor is available.
  */
 public final class DatabaseModule extends AbstractModule {
 

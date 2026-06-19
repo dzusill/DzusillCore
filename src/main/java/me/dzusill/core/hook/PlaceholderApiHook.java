@@ -1,11 +1,12 @@
 package me.dzusill.core.hook;
 
-import me.clip.placeholderapi.PlaceholderAPI;
 import org.bukkit.entity.Player;
 
+import me.clip.placeholderapi.PlaceholderAPI;
+
 /**
- * Integration with PlaceholderAPI. When active, resolves placeholders in arbitrary strings so the
- * plugin can support third-party placeholders in its messages.
+ * Integration with PlaceholderAPI. When active, resolves placeholders in arbitrary strings so the plugin can support
+ * third-party placeholders in its messages.
  */
 public final class PlaceholderApiHook extends PluginHook {
 

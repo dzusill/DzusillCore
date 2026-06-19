@@ -1,15 +1,16 @@
 package me.dzusill.core.nms.version;
 
+import org.bukkit.entity.Player;
+
 import me.dzusill.core.nms.MinecraftVersion;
 import me.dzusill.core.nms.NmsAdapter;
 import me.dzusill.core.nms.NmsFeature;
-import org.bukkit.entity.Player;
 
 /**
- * Fallback adapter selected when no real adapter matches the running version (lenient mode). It
- * reports {@link #isSupported()} {@code false} and {@link #supports(NmsFeature)} {@code false} for
- * everything, and every capability method throws a clear {@link UnsupportedOperationException} — so a
- * plugin that forgets to gate a call fails loudly with a useful message rather than mysteriously.
+ * Fallback adapter selected when no real adapter matches the running version (lenient mode). It reports
+ * {@link #isSupported()} {@code false} and {@link #supports(NmsFeature)} {@code false} for everything, and every
+ * capability method throws a clear {@link UnsupportedOperationException} — so a plugin that forgets to gate a call
+ * fails loudly with a useful message rather than mysteriously.
  */
 public final class NoOpNmsAdapter implements NmsAdapter {
 
@@ -50,8 +51,7 @@ public final class NoOpNmsAdapter implements NmsAdapter {
     }
 
     private UnsupportedOperationException unsupported(NmsFeature feature) {
-        return new UnsupportedOperationException(
-                feature + " is unavailable: no NMS adapter for server version " + version
-                        + ". Gate calls with adapter.supports(" + feature + ").");
+        return new UnsupportedOperationException(feature + " is unavailable: no NMS adapter for server version "
+                + version + ". Gate calls with adapter.supports(" + feature + ").");
     }
 }

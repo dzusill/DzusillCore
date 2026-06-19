@@ -1,20 +1,19 @@
 package me.dzusill.core.command.argument;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import me.dzusill.core.command.CommandContext;
 import me.dzusill.core.command.CommandException;
 import me.dzusill.core.message.Messages;
 import me.dzusill.core.message.Placeholder;
 import me.dzusill.core.util.TextUtils;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 /**
- * Binds an ordered list of named argument specifications to the raw tokens of a command, both
- * for parsing (producing {@link Arguments}) and for tab-completion (suggesting values for the
- * token currently being typed). This is where a command's declared shape drives autofill, so
- * individual commands never implement {@code onTabComplete} by hand.
+ * Binds an ordered list of named argument specifications to the raw tokens of a command, both for parsing (producing
+ * {@link Arguments}) and for tab-completion (suggesting values for the token currently being typed). This is where a
+ * command's declared shape drives autofill, so individual commands never implement {@code onTabComplete} by hand.
  */
 public final class ArgumentParser {
 
@@ -33,9 +32,10 @@ public final class ArgumentParser {
     /**
      * Parses the tokens at and after {@code offset} into typed values.
      *
-     * @param offset index of the first token belonging to these arguments (after any subcommand
-     *               routing tokens)
-     * @throws CommandException if a required argument is missing or a token fails to parse
+     * @param offset
+     *            index of the first token belonging to these arguments (after any subcommand routing tokens)
+     * @throws CommandException
+     *             if a required argument is missing or a token fails to parse
      */
     public Arguments parse(CommandContext context, String[] args, int offset) throws CommandException {
         Map<String, Object> values = new HashMap<>();
@@ -55,8 +55,7 @@ public final class ArgumentParser {
     }
 
     /**
-     * Suggests completions for the in-progress token, delegating to the {@link ArgumentType} that
-     * owns that position.
+     * Suggests completions for the in-progress token, delegating to the {@link ArgumentType} that owns that position.
      */
     public List<String> suggest(CommandContext context, String[] args, int offset) {
         int relative = args.length - 1 - offset;
