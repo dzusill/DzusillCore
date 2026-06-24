@@ -19,7 +19,7 @@ public final class MenuListener extends CoreListener {
         super(plugin);
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onClick(InventoryClickEvent event) {
         if (event.getInventory().getHolder() instanceof Menu menu) {
             menu.handleClick(event);
