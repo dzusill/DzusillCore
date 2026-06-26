@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.logging.Level;
 
 import org.bukkit.entity.Player;
 
@@ -63,16 +64,28 @@ public final class MenuRegistry implements Service {
     public boolean open(Player player, String key, Consumer<PlayerMenuContext> seed) {
         MenuFactory factory = factories.get(key.toLowerCase(Locale.ROOT));
         if (factory == null) {
+            // Previously a silent return: a typo'd key or a menu that was never registered would make
+            // the GUI "just not open" with nothing in the console. Make it loud.
+            plugin.getLogger().severe("No menu is registered under key '" + key + "' (requested by " + player.getName()
+                    + "); GUI cannot open.");
             return false;
         }
-        PlayerMenuContext context = menus.context(player);
-        seed.accept(context);
-        Menu menu = factory.create(plugin, context);
-        if (!menu.permission().isEmpty() && !player.hasPermission(menu.permission())) {
-            messages.send(player, Messages.NO_PERMISSION);
+        try {
+            PlayerMenuContext context = menus.context(player);
+            seed.accept(context);
+            Menu menu = factory.create(plugin, context);
+            if (!menu.permission().isEmpty() && !player.hasPermission(menu.permission())) {
+                messages.send(player, Messages.NO_PERMISSION);
+                return false;
+            }
+            menu.open();
+            return true;
+        } catch (Exception | LinkageError ex) {
+            // Covers the menu's construction and seeding (Menu#open already logs its own render
+            // failures). Without this, a throwing constructor on a non-command path (e.g. a chat-prompt
+            // callback reopening a menu) would be swallowed.
+            plugin.getLogger().log(Level.SEVERE, "Failed to open menu '" + key + "' for " + player.getName(), ex);
             return false;
         }
-        menu.open();
-        return true;
     }
 }

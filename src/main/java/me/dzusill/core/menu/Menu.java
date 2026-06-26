@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -113,25 +114,35 @@ public abstract class Menu implements InventoryHolder {
     }
 
     private void openInternal(boolean recordHistory) {
-        // Bukkit.createInventory(InventoryHolder, int, Component) is a Paper-only overload;
-        // serialize to a legacy section-sign string so this works on plain Spigot/CraftBukkit too.
-        this.inventory = Bukkit.createInventory(this, size(), LEGACY_SECTION.serialize(title()));
-        this.items.clear();
-        this.buttons.clear();
-        this.inputSlots.clear();
+        try {
+            // Bukkit.createInventory(InventoryHolder, int, Component) is a Paper-only overload;
+            // serialize to a legacy section-sign string so this works on plain Spigot/CraftBukkit too.
+            this.inventory = Bukkit.createInventory(this, size(), LEGACY_SECTION.serialize(title()));
+            this.items.clear();
+            this.buttons.clear();
+            this.inputSlots.clear();
 
-        MenuTemplate template = template();
-        if (template != null) {
-            template.apply(this);
-        }
-        decorate();
-        render();
+            MenuTemplate template = template();
+            if (template != null) {
+                template.apply(this);
+            }
+            decorate();
+            render();
 
-        if (recordHistory && context.current() != null && context.current() != this) {
-            context.pushHistory(context.current());
+            if (recordHistory && context.current() != null && context.current() != this) {
+                context.pushHistory(context.current());
+            }
+            context.setCurrent(this);
+            context.player().openInventory(inventory);
+        } catch (Exception | LinkageError ex) {
+            // A broken menu must never fail silently. A misconfigured size (e.g. GUI rows outside 1-6),
+            // a bad material/template, or a missing soft-dependency class (LinkageError) reached during
+            // render would otherwise leave the player staring at nothing with no trace in the console.
+            // LinkageError (NoClassDefFoundError, ...) is caught for the same reason as in CoreCommand;
+            // other VM Errors (OutOfMemoryError, ...) are left to propagate.
+            plugin.getLogger().log(Level.SEVERE,
+                    "Failed to open menu " + getClass().getName() + " for " + context.player().getName(), ex);
         }
-        context.setCurrent(this);
-        context.player().openInventory(inventory);
     }
 
     /**
@@ -248,16 +259,24 @@ public abstract class Menu implements InventoryHolder {
             return;
         }
         event.setCancelled(true);
-        MenuButton button = buttons.get(slot);
-        if (button != null) {
-            if (event.getWhoClicked() instanceof Player player && button.canClick(player)) {
-                button.click(event);
+        try {
+            MenuButton button = buttons.get(slot);
+            if (button != null) {
+                if (event.getWhoClicked() instanceof Player player && button.canClick(player)) {
+                    button.click(event);
+                }
+                return;
             }
-            return;
-        }
-        MenuItem item = items.get(slot);
-        if (item != null) {
-            item.click(event);
+            MenuItem item = items.get(slot);
+            if (item != null) {
+                item.click(event);
+            }
+        } catch (Exception | LinkageError ex) {
+            // Click handlers run teleports, economy, page refreshes, etc. Surface any failure as a
+            // console error with full context instead of letting it bubble up as an opaque Bukkit
+            // event-listener exception (or vanish on paths Bukkit does not log).
+            plugin.getLogger().log(Level.SEVERE, "Menu " + getClass().getName() + " click handler failed (slot " + slot
+                    + ") for " + context.player().getName(), ex);
         }
     }
 
@@ -266,6 +285,24 @@ public abstract class Menu implements InventoryHolder {
      * player). Default is a no-op.
      */
     protected void onClose(InventoryCloseEvent event) {
+    }
+
+    /**
+     * Deregisters this menu as the player's current menu when its inventory is genuinely closed. Called by
+     * {@link MenuListener} right after {@link #onClose}.
+     *
+     * <p>
+     * Guards against the {@link #refresh()} swap: refresh assigns a brand-new inventory and then opens it, which makes
+     * Bukkit fire a close for the <em>old</em> inventory first. By that point {@link #getInventory()} already points at
+     * the new inventory, so the stale close is ignored and the menu stays registered (and refreshable). Only a real
+     * close — where the closed inventory is still this menu's active one — clears {@code current}, so
+     * {@link MenuManager#refreshAll} stops reopening a menu the player has dismissed.
+     * </p>
+     */
+    void handleClose(InventoryCloseEvent event) {
+        if (event.getInventory() == inventory && context.current() == this) {
+            context.setCurrent(null);
+        }
     }
 
     public PlayerMenuContext context() {

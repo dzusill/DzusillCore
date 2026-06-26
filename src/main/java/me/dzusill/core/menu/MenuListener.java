@@ -42,6 +42,7 @@ public final class MenuListener extends CoreListener {
     public void onClose(InventoryCloseEvent event) {
         if (event.getInventory().getHolder() instanceof Menu menu) {
             menu.onClose(event);
+            menu.handleClose(event);
         }
     }
 }
