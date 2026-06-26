@@ -252,19 +252,10 @@
                                     <shadedPattern>me.dzusill.core.lib.kyori</shadedPattern>
                                 </relocation>
                             </relocations>
-                            <filters>
-                                <filter>
-                                    <artifact>me.dzusill:DzusillCore</artifact>
-                                    <excludes>
-                                        <!-- Example package is reference-only; consumers bring
-                                             their own plugin class + modules. -->
-                                        <exclude>me/dzusill/core/example/**</exclude>
-                                        <!-- Exclude plugin.yml so consumers shading this library
-                                             don't get DzusillCore's main class in their JAR. -->
-                                        <exclude>plugin.yml</exclude>
-                                    </excludes>
-                                </filter>
-                            </filters>
+                            <!-- DzusillCore ships as a standalone server plugin (consumers depend on it
+                                 with `provided` scope + `depend: [DzusillCore]`, they do NOT shade it).
+                                 The shaded jar must therefore keep plugin.yml and the example main class
+                                 (me.dzusill.core.example.ExamplePlugin) so Paper can load it. -->
                         </configuration>
                     </execution>
                 </executions>
@@ -309,7 +300,12 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.2.5</version>
                 <configuration>
+                    <!-- The build JDK (25) is newer than Mockito 5.11 / ByteBuddy 1.14 officially
+                         support, so mocking concrete Bukkit event hierarchies (InventoryClickEvent
+                         etc.) fails with "Byte Buddy could not instrument all classes". This flag is
+                         ByteBuddy's escape hatch to instrument on not-yet-recognised JVM versions. -->
                     <argLine>
+                        -Dnet.bytebuddy.experimental=true
                         --add-opens java.base/java.lang=ALL-UNNAMED
                         --add-opens java.base/java.util=ALL-UNNAMED
                         --add-opens java.base/java.lang.reflect=ALL-UNNAMED

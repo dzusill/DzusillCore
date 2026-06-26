@@ -1,47 +1,177 @@
 # DzusillCore
 
-A reusable Paper plugin template/framework. Clone it to start a new plugin with a modular
-lifecycle, comment-preserving YAML configs, a MiniMessage message service, a declarative command
-framework with automatic tab-completion, and a GUI menu system with reusable templates already in
-place.
+A free, open-source Paper plugin framework. Commands, GUIs, async database, MiniMessage messaging,
+hot-reload config, cooldowns, and a module lifecycle — all wired together and ready to drop into any plugin.
 
-- **Platform:** Paper API 1.21.1
-- **Java:** 21
-- **Build:** Maven
-- **Text:** Adventure + MiniMessage
-- **Tests:** MockBukkit + JUnit 5 + Mockito
+**Platform:** Paper 1.21+ &nbsp;|&nbsp; **Java:** 21 &nbsp;|&nbsp; **Build:** Maven &nbsp;|&nbsp; **License:** Apache 2.0
+
+📖 **[Full documentation on GitBook](https://dzusill.gitbook.io/dzusillcore)**
+
+---
+
+## Two ways to use it
+
+### Option A — Maven dependency *(existing project)*
+
+Add JitPack and the dependency to your `pom.xml`. Use `compile` scope so Maven shades DzusillCore
+into your plugin's fat JAR — no separate server plugin needed on the server.
+
+```xml
+<repositories>
+    <repository>
+        <id>papermc-repo</id>
+        <url>https://repo.papermc.io/repository/maven-public/</url>
+    </repository>
+    <repository>
+        <id>jitpack.io</id>
+        <url>https://jitpack.io</url>
+    </repository>
+</repositories>
+
+<dependencies>
+    <!-- Paper API (provided — already on the server) -->
+    <dependency>
+        <groupId>io.papermc.paper</groupId>
+        <artifactId>paper-api</artifactId>
+        <version>1.21.1-R0.1-SNAPSHOT</version>
+        <scope>provided</scope>
+    </dependency>
+
+    <!-- DzusillCore — compile scope so it gets shaded into your JAR -->
+    <dependency>
+        <groupId>me.dzusill</groupId>
+        <artifactId>DzusillCore</artifactId>
+        <version>1.1.0</version>
+        <scope>compile</scope>
+    </dependency>
+</dependencies>
+```
+
+Configure the Maven Shade Plugin to bundle DzusillCore and exclude its resource files so they don't
+overwrite yours:
+
+```xml
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-shade-plugin</artifactId>
+    <version>3.5.3</version>
+    <executions>
+        <execution>
+            <phase>package</phase>
+            <goals><goal>shade</goal></goals>
+            <configuration>
+                <createDependencyReducedPom>false</createDependencyReducedPom>
+                <filters>
+                    <!-- exclude DzusillCore's resource files — your plugin provides its own -->
+                    <filter>
+                        <artifact>me.dzusill:DzusillCore</artifact>
+                        <excludes>
+                            <exclude>plugin.yml</exclude>
+                            <exclude>config.yml</exclude>
+                            <exclude>messages.yml</exclude>
+                            <exclude>database.yml</exclude>
+                            <exclude>menus.yml</exclude>
+                            <exclude>*.sql</exclude>
+                        </excludes>
+                    </filter>
+                    <filter>
+                        <artifact>*:*</artifact>
+                        <excludes>
+                            <exclude>META-INF/*.SF</exclude>
+                            <exclude>META-INF/*.DSA</exclude>
+                            <exclude>META-INF/*.RSA</exclude>
+                            <exclude>module-info.class</exclude>
+                        </excludes>
+                    </filter>
+                </filters>
+            </configuration>
+        </execution>
+    </executions>
+</plugin>
+```
+
+> **Note on Adventure:** DzusillCore shades and relocates Adventure to `me.dzusill.core.lib.kyori`.
+> Import `Component` from there — never from `net.kyori` directly — to avoid classpath conflicts.
+
+---
+
+### Option B — GitHub template *(new plugin from scratch)*
+
+Click **Use this template → Create a new repository** on GitHub to get a fresh repo with all
+framework files and the working example plugin already in place.
+
+```bash
+git clone https://github.com/YOUR_USERNAME/YOUR_PLUGIN.git
+cd YOUR_PLUGIN
+```
+
+1. Update `groupId`, `artifactId`, and `name` in `pom.xml`.
+2. Update `main` in `src/main/resources/plugin.yml`.
+3. Replace the `me.dzusill.core.example` package with your own code (keep it as reference first).
+4. `mvn package` — shaded JAR lands in `target/`.
+
+Full walkthrough: [docs/getting-started/installation.md](docs/getting-started/installation.md)
+
+---
+
+## Real-world example — dDeathPenalty
+
+[**dDeathPenalty**](https://github.com/dzusill/dDeathPenalty) is a full production plugin built on
+DzusillCore. Browse its source to see every framework system in a real context:
+
+| What it shows | Where |
+|---|---|
+| `CorePlugin` + ordered `CoreModule[]` | `DeathPenaltyPlugin.java` |
+| `@CommandMeta` + `CoreCommand` + `SubCommand` routing | `command/DeathPenaltyCommand.java` |
+| `AbstractConfig` + `ConfigManager` hot-reload | `config/DeathPenaltyConfig.java` |
+| Vault / PlaceholderAPI / WorldGuard via `HookManager` | `module/IntegrationModule.java` |
+| `CooldownManager<UUID>` for per-player rate limiting | `module/PenaltyModule.java` |
+| MockBukkit + JUnit 5 unit tests | `src/test/` |
+
+---
+
+## Features
+
+| System | What you get |
+|---|---|
+| **Module lifecycle** | `CoreModule[]` array; ordered enable/disable; `ServiceRegistry` for wiring |
+| **Commands** | `@CommandMeta`, `CoreCommand`, `SubCommand` nesting, automatic tab-complete, 6 built-in argument types |
+| **GUIs** | `@MenuMeta`, fluent `button()` API, permission-gated slots, `PaginatedMenu`, `YamlMenuTemplate` |
+| **Database** | MySQL + PostgreSQL via HikariCP, fully async `CompletableFuture` API, `AbstractSqlRepository` |
+| **Messaging** | `MessageService` + `messages.yml` + MiniMessage; falls back to legacy section-sign on plain Spigot |
+| **Config** | `AbstractConfig`, comment-preserving YAML, `ConfigManager` reloads all at once |
+| **Cooldowns** | Generic `CooldownManager<K>` keyed by any type (`UUID`, `String`, …) |
+| **Hooks** | `HookManager` lazy-loads Vault / PlaceholderAPI / EssentialsX only when present |
+| **Scheduler** | `SchedulerService` — sync, async, delayed, repeating, async-to-main-thread |
+| **Storage** | `YamlDataStore` / `SqlDataStore` behind a common `DataStore<K,V>` interface |
+| **NMS / multi-version** | `NmsAdapter` interface + `VersionDetector`; ships `ReflectiveNmsAdapter` (1.16.5–1.21.x) |
+| **Utilities** | `ItemBuilder`, `ColorUtils`, `LocationUtils`, `TimeUtils`, `NumberUtils`, `TextUtils` |
+
+---
 
 ## Quickstart
-
-1. Copy the project (use the **Use this template** button on GitHub or clone it).
-2. Rename the project: update `groupId`, `artifactId`, and `name` in [pom.xml](pom.xml), and
-   the `main` class path in [plugin.yml](src/main/resources/plugin.yml).
-3. Replace the `me.dzusill.core.example` package with your own plugin class and modules. The
-   example package is a working reference and can be deleted once you have your own.
-4. Build: `mvn package`. The shaded jar lands in `target/`.
-
-A minimal plugin entry point:
 
 ```java
 public class MyPlugin extends CorePlugin {
     @Override
     protected CoreModule[] modules() {
         return new CoreModule[]{
-                new FoundationModule(this),
-                new CommandModule(this)
+            new FoundationModule(this),   // ConfigManager, MessageService, SchedulerService
+            new CommandModule(this)        // CommandRegistry
         };
     }
 }
 ```
 
-Modules are enabled in array order and disabled in reverse. Each module publishes the services it
-owns into the shared `ServiceRegistry` and resolves the services it needs, so startup order is the
-single source of truth for dependencies.
+Modules enable in array order and disable in reverse. Each module publishes services into the shared
+`ServiceRegistry` and resolves the services it needs — startup order is the single source of truth.
+
+---
 
 ## Package overview
 
 | Package | Responsibility |
-| --- | --- |
+|---|---|
 | `me.dzusill.core` | `CorePlugin` bootstrap base |
 | `module` | `CoreModule` / `AbstractModule` / `ModuleManager` lifecycle |
 | `service` | `Service`, `ServiceRegistry`, `Reloadable` decoupling layer |
@@ -55,73 +185,55 @@ single source of truth for dependencies.
 | `database` | `Database`, `MySqlDatabase`/`PostgreSqlDatabase`, `DatabaseManager`, `query/*`, `repository/*` |
 | `scheduler` | `SchedulerService` (sync/async/delayed/repeating + async-to-sync) |
 | `cooldown` | generic `CooldownManager<K>` |
-| `permission` | `CorePermission` node constants |
+| `nms` | `NmsAdapter`, `VersionDetector`, `MinecraftVersion`, version adapters |
 | `util` | `ItemBuilder`, `ColorUtils`, `LocationUtils`, `TimeUtils`, `NumberUtils`, `TextUtils` |
+
+---
 
 ## Adding a command
 
-Commands are registered at runtime through `CommandRegistry` (no `plugin.yml` entry needed) and
-declare their shape; parsing, validation and tab-completion are derived automatically.
-
 ```java
-@CommandMeta(name = "heal", permission = "core.heal", playerOnly = true)
+@CommandMeta(name = "heal", permission = "myplugin.heal", playerOnly = true)
 public final class HealCommand extends CoreCommand {
     public HealCommand() {
-        optionalArg("target", new OnlinePlayerArgument()); // auto-completes online players
+        optionalArg("target", new OnlinePlayerArgument());
     }
 
     @Override
-    public void run(CommandContext context, Arguments args) {
-        Player target = args.getOr("target", context.player());
+    public void run(CommandContext ctx, Arguments args) {
+        Player target = args.getOr("target", ctx.player());
         target.setHealth(target.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue());
     }
 }
 ```
 
-Group commands by registering children, which turns the parent into a router:
+Group subcommands with `child(new SomeSubCommand())` in the parent constructor. Built-in types:
+`StringArgument`, `IntArgument`, `PlayerArgument`, `OnlinePlayerArgument`, `EnumArgument`,
+`MaterialArgument`. Custom types implement `ArgumentType<T>` (`parse` + `suggest`).
 
-```java
-@CommandMeta(name = "core", permission = "core.admin")
-public final class CoreAdminCommand extends CoreCommand {
-    public CoreAdminCommand(/* deps */) {
-        child(new ReloadSubCommand(/* deps */));
-    }
-    @Override public void run(CommandContext ctx, Arguments args) { /* show help */ }
-}
-```
-
-Built-in argument types live in `command.argument.types`: `StringArgument`, `IntArgument`,
-`PlayerArgument`, `OnlinePlayerArgument`, `EnumArgument`, `MaterialArgument`. Add your own by
-implementing `ArgumentType<T>` (`parse` + `suggest`).
+---
 
 ## Adding a menu
 
 ```java
+@MenuMeta(title = "<dark_purple>Shop", size = 27)
 public final class ShopMenu extends Menu {
-    public ShopMenu(CorePlugin plugin, PlayerMenuContext context) { super(plugin, context); }
-
-    @Override public Component title() { return ColorUtils.parse("<dark_purple>Shop"); }
-    @Override public int size() { return 27; }
-    @Override protected MenuTemplate template() { return Templates.bordered(); }
+    public ShopMenu(CorePlugin plugin, PlayerMenuContext ctx) { super(plugin, ctx); }
 
     @Override
     protected void decorate() {
-        set(13, MenuItem.of(
-                new ItemBuilder(Material.DIAMOND).name("<aqua>Buy").glow().build(),
-                event -> context.player().sendMessage(ColorUtils.parse("<green>Bought!"))));
+        button(13)
+            .icon(new ItemBuilder(Material.DIAMOND).name("<aqua>Buy").glow().build())
+            .onClick(e -> context.player().sendMessage(ColorUtils.parse("<green>Bought!")))
+            .add();
     }
 }
-
-// open it:
-new ShopMenu(plugin, menuManager.context(player)).open();
 ```
 
-- Extend `PaginatedMenu` instead to get automatic paging and a navigation bar; just implement
-  `content()`.
-- Reuse layouts with `Templates.bordered()` / `Templates.filled()`, or define them in
-  [menus.yml](src/main/resources/menus.yml) and apply with `new YamlMenuTemplate(config, path)`.
-- Clicks are dispatched by the single `MenuListener` via the `InventoryHolder` pattern; menus never
-  register their own listeners. `back()` uses the per-player navigation history.
+Extend `PaginatedMenu` for automatic paging. Define layouts in `menus.yml` via `YamlMenuTemplate`
+so server owners can restyle GUIs without recompiling.
+
+---
 
 ## Adding a config
 
@@ -131,77 +243,69 @@ public final class SettingsConfig extends AbstractConfig {
     public String prefix() { return raw().getString("prefix", "<gray>[Core]</gray> "); }
 }
 
-// register so it reloads with /core reload:
+// register so it reloads with /myplugin reload:
 configManager.register(new SettingsConfig(plugin));
 ```
 
-`Config` preserves comments and auto-adds new keys from the bundled resource across versions, so
-shipped defaults can evolve without overwriting user edits.
+---
 
 ## Using the database
-
-MySQL and PostgreSQL are supported through a HikariCP-pooled, fully async layer. The database is
-optional: with `enabled: false` in [database.yml](src/main/resources/database.yml) the plugin runs
-normally and `DatabaseManager.isEnabled()` returns `false`.
-
-Configure connection details in `database.yml`, then resolve the manager and use the `Database`:
 
 ```java
 DatabaseManager dbManager = services.get(DatabaseManager.class);
 if (dbManager.isEnabled()) {
-    Database db = dbManager.database();
-    db.queryOne("SELECT coins FROM core_players WHERE uuid = ?",
-                rs -> rs.getInt("coins"),
-                uuid.toString())
-      .thenAcceptAsync(opt -> opt.ifPresent(coins -> /* touch Bukkit API */ {}),
-                       scheduler.mainThreadExecutor());
+    dbManager.database()
+        .queryOne("SELECT coins FROM players WHERE uuid = ?",
+                  rs -> rs.getInt("coins"), uuid.toString())
+        .thenAcceptAsync(opt -> opt.ifPresent(coins -> { /* Bukkit API here */ }),
+                         scheduler.mainThreadExecutor());
 }
 ```
 
-Key points:
+Every `Database` method is async (`CompletableFuture`). Resume on the main thread with
+`scheduler.mainThreadExecutor()` before touching the Bukkit API. Set `enabled: false` in
+`database.yml` to skip it entirely. For typed models extend `AbstractSqlRepository<ID, T>`.
 
-- Every `Database` method is async and returns a `CompletableFuture`, executed off the main thread.
-  Resume on the main thread with `scheduler.mainThreadExecutor()` before touching the Bukkit API.
-- Schema is applied at startup from `schema-mysql.sql` / `schema-postgresql.sql` (per dialect).
-- Dialect differences (driver, URL, upsert syntax) live in the `DatabaseType` enum; adding a backend
-  (e.g. SQLite) is one new constant plus a thin `Database` subclass.
-
-For a typed model, extend `AbstractSqlRepository<ID, T>` (see
-[PlayerRepository](src/main/java/me/dzusill/core/example/database/PlayerRepository.java)); the
-insert-or-update is generated per dialect, so it runs unchanged on MySQL and PostgreSQL.
-
-To stay storage-agnostic, use `SqlDataStore<V>`, a SQL-backed implementation of the same
-`DataStore` interface as `YamlDataStore`, so a feature can swap YAML for SQL with no code changes.
+---
 
 ## Optional integrations (hooks)
-
-Soft dependencies (Vault, PlaceholderAPI, EssentialsX, …) are fully optional. Declare them in
-`plugin.yml` under `softdepend`, keep their APIs at Maven `provided` scope, and register each hook
-**lazily by plugin name** so the hook class is only loaded when the plugin is actually installed:
 
 ```java
 HookManager hooks = new HookManager(plugin);
 hooks.register("Vault", VaultHook::new);
 hooks.register("PlaceholderAPI", PlaceholderApiHook::new);
-```
 
-The factory (constructor reference) runs only after the presence check, so a hook that imports a
-soft-dependency's API types never triggers `NoClassDefFoundError` when that plugin is absent. This
-is what lets the same template power trivial plugins (none of these installed) and full ones.
-
-Resolve a hook only when it is active:
-
-```java
+// resolve later:
 hooks.get(VaultHook.class).ifPresent(vault -> {
     Economy economy = vault.economy();
-    // ...
 });
 ```
 
-Add a new integration by extending `PluginHook` (presence check + `setup()` are handled by the
-base class) and registering it the same way.
+Hook classes are only classloaded when the target plugin is present — `NoClassDefFoundError` never
+fires. Add new integrations by extending `PluginHook`.
+
+---
 
 ## Testing
 
-`mvn test` runs the MockBukkit + JUnit 5 suite. Integration tests load `ExamplePlugin` through
-MockBukkit; the plugin main class must not be `final` (MockBukkit subclasses it).
+```bash
+mvn test
+```
+
+Uses MockBukkit 3.133.2 + JUnit 5 + Mockito 5. No live server needed. Plugin main class must not
+be `final` (MockBukkit subclasses it for test isolation).
+
+---
+
+## Documentation
+
+📖 **[dzusill.gitbook.io/dzusillcore](https://dzusill.gitbook.io/dzusillcore)**
+
+Covers installation, core concepts, commands, GUIs, database, storage, events, integrations, NMS &
+multi-version support, and testing.
+
+---
+
+## License
+
+[Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)

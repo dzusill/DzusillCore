@@ -28,14 +28,15 @@ In your `pom.xml`:
 
 ```xml
 <dependency>
-    <groupId>com.github.kavicka</groupId>
+    <groupId>me.dzusill</groupId>
     <artifactId>DzusillCore</artifactId>
-    <version>v1.1.0</version>
-    <scope>provided</scope>
+    <version>1.1.0</version>
+    <scope>compile</scope>
 </dependency>
 ```
 
-> Replace `v1.1.0` with the [latest release tag](https://github.com/kavicka/DzusillCore/releases).
+> Replace `1.1.0` with the [latest release tag](https://github.com/dzusill/DzusillCore/releases).
+> Use `compile` scope (recommended) to shade DzusillCore into your JAR — see the scope table below.
 
 ### `provided` vs `compile` scope
 

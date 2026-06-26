@@ -24,6 +24,15 @@ public class Config extends YamlConfiguration {
     private File file;
     private Plugin plugin;
 
+    public Config() {
+        // Compiled against spigot-api 1.16.5 (no native comment support), but on Paper 1.18+ YamlConfiguration
+        // preserves comments and blank lines itself. Left on, the server's native handling and this class's custom
+        // comment system would BOTH write the same comments on every save, duplicating headers/blank lines on each
+        // reload. Turn native comment parsing off (reflectively, since the method is absent on 1.16.5) so the custom
+        // parseComments/injectComments pair is the single source of truth.
+        disableNativeComments();
+    }
+
     // -------------------------------------------------------------------------
     // Factory
     // -------------------------------------------------------------------------
@@ -178,6 +187,19 @@ public class Config extends YamlConfiguration {
         Config c = new Config();
         c.failed = true;
         return c;
+    }
+
+    /**
+     * Disables Bukkit's native YAML comment preservation (Paper 1.18+) via reflection. On 1.16.5 the option does not
+     * exist and this is a harmless no-op; on newer servers it prevents comments from being written twice.
+     */
+    private void disableNativeComments() {
+        try {
+            Object opts = options();
+            opts.getClass().getMethod("parseComments", boolean.class).invoke(opts, false);
+        } catch (ReflectiveOperationException ignored) {
+            // Method absent (older API) — native comment handling doesn't exist, nothing to disable.
+        }
     }
 
     /**

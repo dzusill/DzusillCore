@@ -18,8 +18,8 @@ cd YOUR_PLUGIN
 Alternatively, clone DzusillCore directly if you want to inspect or contribute to the framework itself:
 
 ```bash
-git clone https://github.com/kavicka/IdeaProjects.git
-cd IdeaProjects/DzusillCore
+git clone https://github.com/dzusill/DzusillCore.git
+cd DzusillCore
 ```
 
 ## 2. Rename the project
@@ -82,4 +82,5 @@ All tests should pass. See [Testing](../testing.md) for details.
 
 ## GitBook.com sync note
 
-If this project is inside a monorepo (e.g. `IdeaProjects/DzusillCore`), set the **Monorepo root** to `DzusillCore/` in GitBook's GitHub integration settings so GitBook reads `.gitbook.yaml` from the correct path.
+Connect the `dzusill/DzusillCore` GitHub repo to GitBook. GitBook reads `.gitbook.yaml` from the
+repo root — no monorepo path override needed.
