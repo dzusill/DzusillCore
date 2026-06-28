@@ -2,7 +2,6 @@ package me.dzusill.core.example.module;
 
 import me.dzusill.core.CorePlugin;
 import me.dzusill.core.event.ListenerRegistry;
-import me.dzusill.core.example.listener.PlayerSessionListener;
 import me.dzusill.core.example.menu.ShopMenu;
 import me.dzusill.core.menu.MenuListener;
 import me.dzusill.core.menu.MenuManager;
@@ -13,7 +12,8 @@ import me.dzusill.core.module.AbstractModule;
 /**
  * Sets up the GUI subsystem: publishes the {@link MenuManager} and the {@link MenuRegistry}, registers the central
  * {@link MenuListener}, and registers menus by key (just as {@link CommandModule} registers commands). Closes all open
- * menus on shutdown.
+ * menus on shutdown. Per-player context cleanup on quit is owned by the {@link MenuManager} itself (it self-registers
+ * the quit listener), so no plugin-level quit handling is needed.
  */
 public final class MenuModule extends AbstractModule {
 
@@ -30,7 +30,7 @@ public final class MenuModule extends AbstractModule {
 
     @Override
     public void onEnable() {
-        this.menuManager = new MenuManager();
+        this.menuManager = new MenuManager(plugin);
         provide(MenuManager.class, menuManager);
 
         MenuRegistry menus = new MenuRegistry(plugin, menuManager, service(MessageService.class));
@@ -39,7 +39,6 @@ public final class MenuModule extends AbstractModule {
 
         ListenerRegistry listeners = service(ListenerRegistry.class);
         listeners.register(new MenuListener(plugin));
-        listeners.registerAnnotated(new PlayerSessionListener(plugin, menuManager));
     }
 
     @Override

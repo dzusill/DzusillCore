@@ -14,7 +14,7 @@ import org.bukkit.entity.Player;
  */
 public final class PlayerMenuContext {
 
-    private final Player owner;
+    private Player owner;
     private final Map<String, Object> data = new HashMap<>();
     private final Deque<Menu> history = new ArrayDeque<>();
     private Menu current;
@@ -25,6 +25,19 @@ public final class PlayerMenuContext {
 
     public Player player() {
         return owner;
+    }
+
+    /**
+     * Points this context at the current live {@link Player} object. A different object for the same player means a new
+     * session (a reconnect handed out a fresh handle), so any menu/navigation state carried over from the previous
+     * session is dropped — it references inventories that no longer exist. A no-op when the object is unchanged.
+     */
+    void bind(Player player) {
+        if (this.owner != player) {
+            this.owner = player;
+            history.clear();
+            current = null;
+        }
     }
 
     /**
