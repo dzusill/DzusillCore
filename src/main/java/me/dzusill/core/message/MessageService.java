@@ -63,6 +63,16 @@ public final class MessageService implements Service, Reloadable {
     }
 
     /**
+     * The configured raw string for {@code key} (not rendered, {@code <prefix>} not expanded), or the key itself when
+     * absent. Use this when message text is needed as a plain {@link String} — typically a value substituted into
+     * another message's {@code %placeholder%} — rather than a rendered {@link Component}. Keep such values tag-free,
+     * since they are parsed when the outer message renders.
+     */
+    public String raw(String key) {
+        return config.getString(key, key);
+    }
+
+    /**
      * Builds components for a list-valued message key (e.g. multi-line usage text).
      */
     public List<Component> getList(String key, Placeholder placeholder) {
