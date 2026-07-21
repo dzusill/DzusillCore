@@ -96,13 +96,21 @@
         </dependency>
 
         <!-- Adventure: shaded (not provided) because old Spigot/CraftBukkit servers don't ship
-             these classes at all. No platform/NMS-bridge module needed: MessageService picks
-             native Audience-based sending vs a legacy-string fallback itself at runtime (see its
-             class Javadoc), so we only need the core Component/MiniMessage/serializer jars. -->
+             these classes at all. Because we relocate net.kyori (below), our Component/Audience
+             are DIFFERENT classes from the server's own Adventure, so a bare instanceof-Audience
+             check never matches and would silently downgrade every message to a legacy string
+             (dropping click/hover events and hex colors). adventure-platform-bukkit bridges the
+             relocated components to the server on both Spigot and Paper; MessageService sends
+             through it. -->
         <dependency>
             <groupId>net.kyori</groupId>
             <artifactId>adventure-api</artifactId>
             <version>4.17.0</version>
+        </dependency>
+        <dependency>
+            <groupId>net.kyori</groupId>
+            <artifactId>adventure-platform-bukkit</artifactId>
+            <version>4.3.4</version>
         </dependency>
         <dependency>
             <groupId>net.kyori</groupId>

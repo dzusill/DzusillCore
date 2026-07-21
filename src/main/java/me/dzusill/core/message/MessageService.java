@@ -11,6 +11,7 @@ import me.dzusill.core.service.Reloadable;
 import me.dzusill.core.service.Service;
 
 import net.kyori.adventure.audience.Audience;
+import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
@@ -21,11 +22,13 @@ import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
  * color codes or component building.
  *
  * <p>
- * {@code CommandSender#sendMessage(Component)} is a Paper-only overload, so it's never called directly here. On Paper,
- * the live sender object implements Adventure's {@link Audience} (even though our compile-time {@code CommandSender}
- * type, from Spigot API, doesn't expose that), so the {@code instanceof} check below is true and gets native Component
- * rendering. On plain Spigot/CraftBukkit it's false, and we fall back to a legacy section-sign string, which every
- * Bukkit implementation has supported since {@code sendMessage(String)} existed.
+ * Sending goes through {@link BukkitAudiences} (adventure-platform-bukkit). This matters because the build relocates
+ * {@code net.kyori} to {@code me.dzusill.core.lib.kyori}: our {@link Component}/{@link Audience} are therefore
+ * DIFFERENT classes from the server's own Adventure, so a bare {@code recipient instanceof Audience} check would never
+ * match — not even on Paper — and every message would silently degrade to a legacy section-sign string, dropping
+ * click/hover events and hex colors. The platform bridges the relocated components to the client on both Spigot and
+ * Paper. If the platform can't initialize (e.g. a non-server test harness), we fall back to the legacy string path,
+ * which every Bukkit implementation has always supported.
  * </p>
  */
 public final class MessageService implements Service, Reloadable {
@@ -38,10 +41,28 @@ public final class MessageService implements Service, Reloadable {
     private final Plugin plugin;
     private Config config;
     private String prefix;
+    /**
+     * Bridges our relocated Adventure components to the server (Spigot + Paper), preserving click/hover events and hex
+     * colors. Null only if the platform can't initialize (e.g. a non-server test harness), in which case
+     * {@link #sendComponent} degrades to the legacy string path.
+     */
+    private BukkitAudiences audiences;
 
     public MessageService(Plugin plugin) {
         this.plugin = plugin;
         load();
+        // adventure-platform doesn't route through MockBukkit's message log (breaking message-capture
+        // tests), so skip it under the mock server and let sendComponent use the legacy path there.
+        boolean mockServer = plugin.getServer().getClass().getSimpleName().toLowerCase(java.util.Locale.ROOT)
+                .contains("mock");
+        if (!mockServer) {
+            try {
+                this.audiences = BukkitAudiences.create(plugin);
+            } catch (Throwable ignored) {
+                // Unusual platform: fall back to legacy string sending.
+                this.audiences = null;
+            }
+        }
     }
 
     private void load() {
@@ -112,7 +133,11 @@ public final class MessageService implements Service, Reloadable {
      * that overload is Paper-only and won't even compile against plain Spigot's API.
      */
     public void sendComponent(CommandSender recipient, Component component) {
-        if (recipient instanceof Audience audience) {
+        if (audiences != null) {
+            // Platform bridge: works on Spigot + Paper and keeps click/hover events and hex colors,
+            // which a relocated-Adventure instanceof-Audience check can't (different class → always false).
+            audiences.sender(recipient).sendMessage(component);
+        } else if (recipient instanceof Audience audience) {
             audience.sendMessage(component);
         } else {
             recipient.sendMessage(LEGACY_SECTION.serialize(component));
