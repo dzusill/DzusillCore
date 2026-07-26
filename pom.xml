@@ -6,7 +6,7 @@
 
     <groupId>me.dzusill</groupId>
     <artifactId>DzusillCore</artifactId>
-    <version>1.1.0</version>
+    <version>1.2.0</version>
     <packaging>jar</packaging>
 
     <name>DzusillCore</name>
@@ -57,6 +57,11 @@
         <repository>
             <id>codemc-repo</id>
             <url>https://repo.codemc.io/repository/maven-public/</url>
+        </repository>
+        <!-- VaultUnlockedAPI is published here, not to Maven Central or the codemc public group. -->
+        <repository>
+            <id>codemc-creatorfromhell</id>
+            <url>https://repo.codemc.io/repository/creatorfromhell/</url>
         </repository>
     </repositories>
 
@@ -128,20 +133,18 @@
             <version>4.17.0</version>
         </dependency>
 
+        <!-- VaultUnlockedAPI instead of MilkBowl's VaultAPI: it ships BOTH the classic
+             net.milkbowl.vault interfaces (so no source change anywhere) and the newer
+             net.milkbowl.vault2 ones, and its server plugin registers under the name "Vault",
+             making it a drop-in for existing installs. Crucially it is the only Vault that
+             supports Folia - the original stops the server on a regionised tick loop. -->
         <dependency>
-            <groupId>com.github.MilkBowl</groupId>
-            <artifactId>VaultAPI</artifactId>
-            <version>1.7</version>
+            <groupId>net.milkbowl.vault</groupId>
+            <artifactId>VaultUnlockedAPI</artifactId>
+            <version>2.20</version>
             <scope>provided</scope>
-            <exclusions>
-                <!-- VaultAPI transitively pulls an ancient org.bukkit:bukkit:1.13.1 jar that
-                     shadows newer classes from our own spigot-api dependency on the compile
-                     classpath; we already provide the real Bukkit API ourselves. -->
-                <exclusion>
-                    <groupId>org.bukkit</groupId>
-                    <artifactId>bukkit</artifactId>
-                </exclusion>
-            </exclusions>
+            <!-- No exclusions needed: unlike VaultAPI, this artifact declares no dependencies at
+                 all, so it cannot drag an ancient org.bukkit:bukkit onto the compile classpath. -->
         </dependency>
         <dependency>
             <groupId>me.clip</groupId>

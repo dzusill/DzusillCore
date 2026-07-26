@@ -5,6 +5,9 @@ api-version: '1.21'
 description: Reusable Paper plugin template framework
 authors: [dzusill]
 softdepend: [Vault, PlaceholderAPI, Essentials]
+# Paper, Purpur and Folia. The scheduler layer (me.dzusill.core.scheduler) picks the regionised
+# implementation at runtime, so downstream plugins are portable without their own platform code.
+folia-supported: true
 
 # Commands are registered dynamically at runtime through the command framework
 # (CommandRegistry uses Paper's CommandMap), so they do not need to be declared here.

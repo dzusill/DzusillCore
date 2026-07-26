@@ -10,6 +10,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 import me.dzusill.core.CorePlugin;
+import me.dzusill.core.scheduler.SchedulerService;
 import me.dzusill.core.service.Service;
 
 /**
@@ -29,6 +30,7 @@ import me.dzusill.core.service.Service;
 public final class MenuManager implements Service {
 
     private final Map<UUID, PlayerMenuContext> contexts = new ConcurrentHashMap<>();
+    private final SchedulerService scheduler;
 
     /**
      * @param plugin
@@ -37,6 +39,7 @@ public final class MenuManager implements Service {
      */
     public MenuManager(CorePlugin plugin) {
         plugin.getServer().getPluginManager().registerEvents(new QuitCleanupListener(), plugin);
+        this.scheduler = new SchedulerService(plugin);
     }
 
     /**
@@ -69,13 +72,24 @@ public final class MenuManager implements Service {
      * Refreshes every online player's currently open menu if it's an instance of {@code menuType}. For broadcasting a
      * backend state change (e.g. a lottery draw completing) to everyone currently looking at a menu backed by that
      * state, without each menu having to poll for changes itself.
+     *
+     * <p>
+     * Each refresh is dispatched to the thread that owns its viewer, because an inventory may only be mutated there.
+     * That is a no-op indirection on Bukkit/Paper/Purpur (one thread owns everyone) and the only correct form on Folia,
+     * where the caller's region owns none of the other viewers.
+     * </p>
      */
     public void refreshAll(Class<? extends Menu> menuType) {
         for (PlayerMenuContext context : contexts.values()) {
             Menu current = context.current();
-            if (menuType.isInstance(current)) {
-                current.refresh();
+            if (!menuType.isInstance(current)) {
+                continue;
             }
+            Player viewer = context.player();
+            if (viewer == null || !viewer.isOnline()) {
+                continue;
+            }
+            scheduler.atEntity(viewer, current::refresh);
         }
     }
 

@@ -8,6 +8,7 @@ import java.util.function.Supplier;
 import org.bukkit.Bukkit;
 
 import me.dzusill.core.CorePlugin;
+import me.dzusill.core.scheduler.Platforms;
 import me.dzusill.core.service.Service;
 
 /**
@@ -52,6 +53,32 @@ public final class HookManager implements Service {
             return Optional.of(hook);
         }
         return Optional.empty();
+    }
+
+    /**
+     * Same as {@link #register(String, Supplier)}, but skips the hook entirely on Folia.
+     *
+     * <p>
+     * Several popular integrations (EssentialsX, WorldGuard, CMI) do not support Folia and either fail to load or call
+     * the legacy scheduler from our callbacks. Registering them there turns a working server into a crashing one, so
+     * the safe behaviour is to run without the integration and say so loudly once at startup.
+     * </p>
+     *
+     * @param pluginName
+     *            the soft-dependency's plugin name (as in {@code plugin.yml})
+     * @param factory
+     *            creates the hook; only called when the plugin is present and the server is not Folia
+     * @return the active hook, or empty if skipped, absent, or setup did not succeed
+     */
+    public <T extends PluginHook> Optional<T> registerUnlessFolia(String pluginName, Supplier<T> factory) {
+        if (Platforms.isFolia()) {
+            if (Bukkit.getPluginManager().isPluginEnabled(pluginName)) {
+                plugin.getLogger().warning(pluginName + " integration disabled: " + pluginName
+                        + " does not support Folia. " + "Everything else keeps working.");
+            }
+            return Optional.empty();
+        }
+        return register(pluginName, factory);
     }
 
     /**
