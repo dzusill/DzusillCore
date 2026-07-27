@@ -22,14 +22,20 @@ import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
  * color codes or component building.
  *
  * <p>
- * Sending goes through {@link BukkitAudiences} (adventure-platform-bukkit). This matters because the build relocates
- * {@code net.kyori} to {@code me.dzusill.core.lib.kyori}: our {@link Component}/{@link Audience} are therefore
- * DIFFERENT classes from the server's own Adventure, so a bare {@code recipient instanceof Audience} check would never
- * match — not even on Paper — and every message would silently degrade to a legacy section-sign string, dropping
- * click/hover events and hex colors. The platform bridges the relocated components to the client on both Spigot and
- * Paper. If the platform can't initialize (e.g. a non-server test harness), we fall back to the legacy string path,
- * which every Bukkit implementation has always supported.
+ * The build relocates {@code net.kyori} to {@code me.dzusill.core.lib.kyori}, so our {@link Component}/{@link Audience}
+ * are DIFFERENT classes from the server's own Adventure: a bare {@code recipient instanceof Audience} check never
+ * matches, not even on Paper. Delivery therefore walks three paths in order of fidelity:
  * </p>
+ * <ol>
+ * <li>{@link NativeAdventure} — hands the component to the server's own Adventure over JSON. Preferred on Paper and
+ * every fork of it: full click/hover/hex fidelity, and it only uses Adventure's stable public API, so it does not break
+ * when a new Minecraft version ships.</li>
+ * <li>{@link BukkitAudiences} (adventure-platform-bukkit) — for plain Spigot, which has no Adventure of its own. This
+ * one reflects into CraftBukkit internals and so needs a new release for each Minecraft version.</li>
+ * <li>a legacy section-sign string — last resort, and a lossy one: it cannot carry click or hover events at all and
+ * downsamples hex to the 16 named colors. Reaching it is logged once, loudly, because the symptom otherwise looks like
+ * a plugin bug ("the message shows but clicking does nothing") with nothing in the log to explain it.</li>
+ * </ol>
  */
 public final class MessageService implements Service, Reloadable {
 
@@ -42,11 +48,13 @@ public final class MessageService implements Service, Reloadable {
     private Config config;
     private String prefix;
     /**
-     * Bridges our relocated Adventure components to the server (Spigot + Paper), preserving click/hover events and hex
-     * colors. Null only if the platform can't initialize (e.g. a non-server test harness), in which case
-     * {@link #sendComponent} degrades to the legacy string path.
+     * Bridges our relocated Adventure components on plain Spigot. Null when the platform can't initialize — which is
+     * expected under MockBukkit, and harmless on Paper where {@link NativeAdventure} handles delivery instead.
      */
     private BukkitAudiences audiences;
+
+    /** Guards the legacy-fallback warning so a busy server logs it once, not once per message. */
+    private boolean warnedAboutLegacyFallback;
 
     public MessageService(Plugin plugin) {
         this.plugin = plugin;
@@ -58,9 +66,15 @@ public final class MessageService implements Service, Reloadable {
         if (!mockServer) {
             try {
                 this.audiences = BukkitAudiences.create(plugin);
-            } catch (Throwable ignored) {
-                // Unusual platform: fall back to legacy string sending.
+            } catch (Throwable failure) {
+                // Never silent: on a server too new for the bundled adventure-platform this used to leave every
+                // click and hover in every downstream plugin quietly broken, with nothing in the log to explain it.
                 this.audiences = null;
+                if (!NativeAdventure.available()) {
+                    plugin.getLogger().warning("adventure-platform failed to start (" + failure
+                            + ") and this server has no native Adventure — messages will lose click/hover events"
+                            + " and hex colors. Update DzusillCore or run Paper.");
+                }
             }
         }
     }
@@ -133,15 +147,33 @@ public final class MessageService implements Service, Reloadable {
      * that overload is Paper-only and won't even compile against plain Spigot's API.
      */
     public void sendComponent(CommandSender recipient, Component component) {
-        if (audiences != null) {
-            // Platform bridge: works on Spigot + Paper and keeps click/hover events and hex colors,
-            // which a relocated-Adventure instanceof-Audience check can't (different class → always false).
-            audiences.sender(recipient).sendMessage(component);
-        } else if (recipient instanceof Audience audience) {
-            audience.sendMessage(component);
-        } else {
-            recipient.sendMessage(LEGACY_SECTION.serialize(component));
+        // 1. Paper and its forks: the server's own Adventure, reached over JSON. Full fidelity, and immune to the
+        // Minecraft-version drift that breaks adventure-platform's CraftBukkit reflection.
+        if (NativeAdventure.send(recipient, component)) {
+            return;
         }
+        // 2. Plain Spigot: the platform bridge.
+        if (audiences != null) {
+            audiences.sender(recipient).sendMessage(component);
+            return;
+        }
+        // 3. Same relocation as ours (shaded into a consumer that didn't relocate) — rare, but free to support.
+        if (recipient instanceof Audience audience) {
+            audience.sendMessage(component);
+            return;
+        }
+        // 4. Lossy last resort: legacy strings carry no click or hover events.
+        warnLegacyFallbackOnce();
+        recipient.sendMessage(LEGACY_SECTION.serialize(component));
+    }
+
+    private void warnLegacyFallbackOnce() {
+        if (warnedAboutLegacyFallback) {
+            return;
+        }
+        warnedAboutLegacyFallback = true;
+        plugin.getLogger().warning("Falling back to legacy message delivery: click and hover events will not work and"
+                + " hex colors are downsampled. Neither native Adventure nor adventure-platform is usable here.");
     }
 
     /**

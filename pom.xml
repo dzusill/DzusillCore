@@ -112,10 +112,21 @@
             <artifactId>adventure-api</artifactId>
             <version>4.17.0</version>
         </dependency>
+        <!-- Only used on plain Spigot now; Paper goes through NativeAdventure instead. Kept current
+             because adventure-platform reflects into CraftBukkit internals and an outdated copy fails
+             to initialize on a newer server - which silently cost every downstream plugin its click
+             and hover events until MessageService learned to log it. -->
         <dependency>
             <groupId>net.kyori</groupId>
             <artifactId>adventure-platform-bukkit</artifactId>
-            <version>4.3.4</version>
+            <version>4.4.1</version>
+        </dependency>
+        <!-- JSON is the wire format NativeAdventure uses to hand components to the server's own
+             (non-relocated) Adventure without either side sharing a class. -->
+        <dependency>
+            <groupId>net.kyori</groupId>
+            <artifactId>adventure-text-serializer-gson</artifactId>
+            <version>4.17.0</version>
         </dependency>
         <dependency>
             <groupId>net.kyori</groupId>
