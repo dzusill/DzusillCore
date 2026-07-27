@@ -71,6 +71,21 @@ public interface PlatformScheduler {
      */
     PlatformTask atEntity(Entity entity, Runnable task);
 
+    /**
+     * Runs on the thread that owns {@code entity}, with a fallback for the entity going away first.
+     *
+     * <p>
+     * The one-shot analogue of {@link #repeatAtEntity}'s {@code retired} hook. Anything that hands a result back to a
+     * player after off-thread work needs it: a player who logs out mid-request owns no thread any more, so the task is
+     * simply dropped and whatever state it was going to settle (a cooldown, a lock) would hang.
+     * </p>
+     *
+     * @param retired
+     *            invoked instead of {@code task} if the entity was removed (a player logged out) before it could run;
+     *            may be {@code null}
+     */
+    PlatformTask atEntity(Entity entity, Runnable task, Runnable retired);
+
     /** Runs on the entity's owning thread after a delay. Values below 1 tick are raised to 1 (Folia rejects 0). */
     PlatformTask atEntityLater(Entity entity, Runnable task, long delayTicks);
 

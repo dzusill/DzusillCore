@@ -6,6 +6,7 @@ import java.util.function.Consumer;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.scheduler.BukkitTask;
@@ -87,6 +88,17 @@ final class BukkitPlatformScheduler implements PlatformScheduler {
     }
 
     @Override
+    public PlatformTask atEntity(Entity entity, Runnable task, Runnable retired) {
+        return global(() -> {
+            if (retired != null && retired(entity)) {
+                retired.run();
+                return;
+            }
+            task.run();
+        });
+    }
+
+    @Override
     public PlatformTask atEntityLater(Entity entity, Runnable task, long delayTicks) {
         return globalLater(task, delayTicks);
     }
@@ -97,12 +109,21 @@ final class BukkitPlatformScheduler implements PlatformScheduler {
         // There is no per-entity task lifecycle here; mirror Folia's contract by checking validity each run so the
         // `retired` callback fires on both platforms and callers need only one code path.
         return globalRepeating(() -> {
-            if (!entity.isValid() && retired != null) {
+            if (retired != null && retired(entity)) {
                 retired.run();
                 return;
             }
             task.run();
         }, delayTicks, periodTicks);
+    }
+
+    /**
+     * Whether Folia would consider this entity retired. A logged-out {@link Player} is the case that matters here:
+     * their entity is gone, so anything scheduled "at" them can never run, and {@code isValid()} alone is not a
+     * reliable read of that across server implementations.
+     */
+    private static boolean retired(Entity entity) {
+        return entity instanceof Player player ? !player.isOnline() : !entity.isValid();
     }
 
     @Override

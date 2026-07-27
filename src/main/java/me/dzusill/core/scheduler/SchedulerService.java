@@ -91,6 +91,17 @@ public final class SchedulerService implements Service {
         return platform.atEntity(entity, task);
     }
 
+    /**
+     * Runs on the thread owning {@code entity}, falling back to {@code retired} if the entity is gone by then.
+     *
+     * @param retired
+     *            invoked instead of {@code task} when the entity was removed (a player logged out) before it could run;
+     *            may be {@code null}
+     */
+    public PlatformTask atEntity(Entity entity, Runnable task, Runnable retired) {
+        return platform.atEntity(entity, task, retired);
+    }
+
     /** Runs on the entity's owning thread after a delay. */
     public PlatformTask atEntityLater(Entity entity, Runnable task, long delayTicks) {
         return platform.atEntityLater(entity, task, delayTicks);
@@ -163,9 +174,27 @@ public final class SchedulerService implements Service {
      * GUI, or otherwise touches that entity.
      */
     public <T> void asyncThenAtEntity(Entity entity, Supplier<T> supplier, Consumer<T> consumer) {
+        asyncThenAtEntity(entity, supplier, consumer, null);
+    }
+
+    /**
+     * Computes {@code supplier} off-thread, then passes its result to {@code consumer} on the thread owning
+     * {@code entity} — or runs {@code retired} instead when the entity is gone by then.
+     *
+     * <p>
+     * Use this form whenever the consumer settles state the player can hit again (a cooldown, a "request in flight"
+     * flag). Without it, a player who logs out during the off-thread work silently loses the consumer and the state
+     * stays stuck until it times out on its own.
+     * </p>
+     *
+     * @param retired
+     *            invoked instead of {@code consumer} when the entity was removed before the result arrived; may be
+     *            {@code null}
+     */
+    public <T> void asyncThenAtEntity(Entity entity, Supplier<T> supplier, Consumer<T> consumer, Runnable retired) {
         async(() -> {
             T result = supplier.get();
-            atEntity(entity, () -> consumer.accept(result));
+            atEntity(entity, () -> consumer.accept(result), retired);
         });
     }
 

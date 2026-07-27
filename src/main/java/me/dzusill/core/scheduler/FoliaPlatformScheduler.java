@@ -183,7 +183,18 @@ final class FoliaPlatformScheduler implements PlatformScheduler {
 
     @Override
     public PlatformTask atEntity(Entity entity, Runnable task) {
-        return wrap(invoke(ENTITY_RUN, schedulerOf(entity), plugin, callback(task), null));
+        return atEntity(entity, task, null);
+    }
+
+    @Override
+    public PlatformTask atEntity(Entity entity, Runnable task, Runnable retired) {
+        Object scheduled = invoke(ENTITY_RUN, schedulerOf(entity), plugin, callback(task), retired);
+        if (scheduled == null && retired != null) {
+            // Already retired at submit time: Folia returns null and never calls the hook itself. Run it here so the
+            // caller sees exactly one of task/retired on every path.
+            retired.run();
+        }
+        return wrap(scheduled);
     }
 
     @Override
