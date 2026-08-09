@@ -1,6 +1,7 @@
 package me.dzusill.core.example;
 
 import me.dzusill.core.CorePlugin;
+import me.dzusill.core.dialog.DialogModule;
 import me.dzusill.core.example.module.CommandModule;
 import me.dzusill.core.example.module.DatabaseModule;
 import me.dzusill.core.example.module.FoundationModule;
@@ -24,7 +25,7 @@ public class ExamplePlugin extends CorePlugin {
     @Override
     protected CoreModule[] modules() {
         return new CoreModule[]{new FoundationModule(this), new NmsModule(this), new DatabaseModule(this),
-                new IntegrationModule(this), new MenuModule(this), new CommandModule(this)};
+                new IntegrationModule(this), new MenuModule(this), new DialogModule(this), new CommandModule(this)};
     }
 
     @Override

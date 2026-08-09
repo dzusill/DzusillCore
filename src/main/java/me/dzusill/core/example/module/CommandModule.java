@@ -35,5 +35,7 @@ public final class CommandModule extends AbstractModule {
         commands.register(new CoreAdminCommand(service(ConfigManager.class), messages));
         commands.register(new HealCommand());
         commands.register(new ShopCommand(service(MenuRegistry.class)));
+        commands.register(new me.dzusill.core.example.command.DialogDemoCommand(
+                service(me.dzusill.core.dialog.DialogService.class)));
     }
 }
