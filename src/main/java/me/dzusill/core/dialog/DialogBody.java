@@ -17,13 +17,15 @@ public sealed interface DialogBody {
      * </p>
      *
      * @param contents
-     *            MiniMessage text
+     *            MiniMessage text. May be empty: an empty line is how a dialog gets vertical space between sections,
+     *            and vanilla accepts one. Rejecting it here made a documented blank spacer throw at open time instead
+     *            of rendering - the same mistake as forbidding an empty title, which vanilla also allows.
      * @param width
      *            1-1024, vanilla default 200
      */
     record PlainMessage(String contents, int width) implements DialogBody {
         public PlainMessage {
-            contents = DialogValidation.requireText(contents, "body contents");
+            contents = DialogValidation.requireNonNull(contents, "body contents");
             DialogValidation.requireWidth(width, "body width");
         }
 

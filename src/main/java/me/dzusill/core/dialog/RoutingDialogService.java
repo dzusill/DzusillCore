@@ -285,8 +285,11 @@ public final class RoutingDialogService implements DialogService, DialogCallback
 
         Optional<PendingDialogs.Pending> claimed = pending.claim(token, playerId);
         if (claimed.isEmpty()) {
-            // Unknown, expired, already used, or forged on someone else's behalf. Never act on it.
-            plugin.getLogger().fine(() -> "Ignoring unmatched dialog response from " + playerId);
+            // Unknown, expired, already used, or forged on someone else's behalf. Never act on it - but say so.
+            // This used to be logged at FINE, which meant a button that did nothing produced no evidence at all.
+            plugin.getLogger().warning("Ignoring a dialog response from " + playerId
+                    + ": its token is unknown, expired or already used. If a button appears to do nothing, this is"
+                    + " why - the dialog it belongs to is no longer pending.");
             return;
         }
 
