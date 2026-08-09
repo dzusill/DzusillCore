@@ -76,9 +76,10 @@ public final class DialogModule extends AbstractModule {
             prompts = ownedPrompts;
         }
 
-        DialogFallback fallback = explicitFallback != null
-                ? explicitFallback
-                : new ChatDialogFallback(messages, prompts);
+        // A custom fallback overrides only what it chooses to handle; the chat fallback still catches the rest, so
+        // supplying one cannot accidentally disable text prompts.
+        DialogFallback chat = new ChatDialogFallback(messages, prompts);
+        DialogFallback fallback = explicitFallback == null ? chat : explicitFallback.orElse(chat);
 
         dialogs = new RoutingDialogService(plugin, scheduler, new PendingDialogs(), fallback);
         dialogs.forceFallback(plugin.getConfig().getBoolean("dialogs.force-fallback", false));

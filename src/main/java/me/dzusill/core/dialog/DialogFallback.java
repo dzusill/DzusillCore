@@ -26,6 +26,21 @@ public interface DialogFallback {
     boolean handle(Player player, DialogSpec spec, DialogHandler handler);
 
     /**
+     * Chains a second fallback behind this one, used when this fallback declines.
+     *
+     * <p>
+     * Lets a plugin override only the shapes it has a better answer for - typically a confirmation, where an existing
+     * chest menu beats a chat prompt - while everything else still reaches the built-in chat fallback. Without this,
+     * supplying a custom fallback would silently drop text prompts.
+     * </p>
+     */
+    default DialogFallback orElse(DialogFallback next) {
+        if (next == null)
+            return this;
+        return (player, spec, handler) -> handle(player, spec, handler) || next.handle(player, spec, handler);
+    }
+
+    /**
      * A fallback that never handles anything - dialogs simply do not appear when unsupported.
      */
     static DialogFallback none() {
