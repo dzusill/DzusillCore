@@ -6,7 +6,7 @@
 
     <groupId>me.dzusill</groupId>
     <artifactId>DzusillCore</artifactId>
-    <version>1.3.0</version>
+    <version>1.4.0</version>
     <packaging>jar</packaging>
 
     <name>DzusillCore</name>
@@ -243,6 +243,9 @@
                 <version>3.13.0</version>
                 <configuration>
                     <release>${java.version}</release>
+                    <!-- Maven runs on JDK 25 on some dev machines, where the in-process compiler dies during
+                         testCompile with "this.hashes is null". Forking sidesteps it. -->
+                    <fork>true</fork>
                 </configuration>
             </plugin>
             <plugin>
