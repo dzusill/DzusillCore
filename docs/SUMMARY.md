@@ -41,6 +41,14 @@
 * [Pagination](guis/pagination.md)
 * [Examples](guis/examples.md)
 
+## Dialogs
+
+* [Overview](dialogs/overview.md)
+* [DialogService](dialogs/service.md)
+* [Fallbacks](dialogs/fallback.md)
+* [Examples](dialogs/examples.md)
+* [Chat prompts](prompts.md)
+
 ## Events
 
 * [Listeners](events.md)
