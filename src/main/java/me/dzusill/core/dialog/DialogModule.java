@@ -6,7 +6,10 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.server.PluginDisableEvent;
 
 import me.dzusill.core.CorePlugin;
+import me.dzusill.core.message.MessageService;
 import me.dzusill.core.module.AbstractModule;
+import me.dzusill.core.prompt.ChatPromptService;
+import me.dzusill.core.prompt.PromptService;
 import me.dzusill.core.scheduler.PlatformTask;
 import me.dzusill.core.scheduler.SchedulerService;
 
@@ -14,8 +17,8 @@ import me.dzusill.core.scheduler.SchedulerService;
  * Wires the dialog subsystem.
  *
  * <p>
- * Place after the foundation module - it resolves {@link SchedulerService} - and before any module whose commands or
- * menus open dialogs.
+ * Place after the foundation module - it resolves {@link SchedulerService} and {@link MessageService} - and before any
+ * module whose commands or menus open dialogs.
  * </p>
  *
  * <p>
@@ -23,24 +26,37 @@ import me.dzusill.core.scheduler.SchedulerService;
  * whether a native dialog is possible is decided per call, per player, by the routing service, so call sites never have
  * to branch and a server upgrade needs no code change.
  * </p>
+ *
+ * <p>
+ * Also publishes a {@link PromptService} if nothing else has - the chat fallback needs one, and it is independently
+ * useful as the replacement for the per-plugin chat-prompt classes duplicated across the ecosystem.
+ * </p>
  */
 public final class DialogModule extends AbstractModule {
 
     /** Expiry is not urgent; a minute of granularity on a two-minute TTL is plenty. */
     private static final long SWEEP_PERIOD_TICKS = 20L * 60L;
 
-    private final DialogFallback fallback;
+    private final DialogFallback explicitFallback;
 
     private RoutingDialogService dialogs;
+    private ChatPromptService ownedPrompts;
     private PlatformTask sweepTask;
 
+    /**
+     * Uses the built-in chat fallback.
+     */
     public DialogModule(CorePlugin plugin) {
-        this(plugin, DialogFallback.none());
+        this(plugin, null);
     }
 
+    /**
+     * @param fallback
+     *            a custom fallback, e.g. one backed by an existing confirm menu; {@code null} uses the chat fallback
+     */
     public DialogModule(CorePlugin plugin, DialogFallback fallback) {
         super(plugin);
-        this.fallback = fallback;
+        this.explicitFallback = fallback;
     }
 
     @Override
@@ -51,6 +67,18 @@ public final class DialogModule extends AbstractModule {
     @Override
     public void onEnable() {
         SchedulerService scheduler = service(SchedulerService.class);
+        MessageService messages = service(MessageService.class);
+
+        PromptService prompts = services().find(PromptService.class).orElse(null);
+        if (prompts == null) {
+            ownedPrompts = new ChatPromptService(plugin, scheduler, messages);
+            provide(PromptService.class, ownedPrompts);
+            prompts = ownedPrompts;
+        }
+
+        DialogFallback fallback = explicitFallback != null
+                ? explicitFallback
+                : new ChatDialogFallback(messages, prompts);
 
         dialogs = new RoutingDialogService(plugin, scheduler, new PendingDialogs(), fallback);
         dialogs.forceFallback(plugin.getConfig().getBoolean("dialogs.force-fallback", false));
@@ -59,8 +87,8 @@ public final class DialogModule extends AbstractModule {
         plugin.getServer().getPluginManager().registerEvents(new LifecycleListener(), plugin);
         sweepTask = scheduler.repeating(dialogs::sweep, SWEEP_PERIOD_TICKS, SWEEP_PERIOD_TICKS);
 
-        if (dialogs.isForcingFallback())
-            plugin.getLogger().info("Dialogs: force-fallback is on; native dialogs are disabled.");
+        plugin.getLogger().info("Dialogs ready (prompt=" + prompts.kind()
+                + (dialogs.isForcingFallback() ? ", force-fallback=on" : "") + ")");
     }
 
     @Override
@@ -71,6 +99,8 @@ public final class DialogModule extends AbstractModule {
             // Resolves every in-flight handler as cancelled rather than leaving callers waiting forever.
             dialogs.reload();
         }
+        if (ownedPrompts != null)
+            ownedPrompts.shutdown();
     }
 
     /**
