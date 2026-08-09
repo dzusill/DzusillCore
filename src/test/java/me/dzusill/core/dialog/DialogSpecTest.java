@@ -31,12 +31,16 @@ class DialogSpecTest {
     class VanillaRules {
 
         @Test
-        @DisplayName("title is required - vanilla: 'No key title in MapLike[...]'")
+        @DisplayName("title must be present - vanilla: 'No key title in MapLike[...]'")
         void titleRequired() {
             assertThrows(IllegalArgumentException.class,
                     () -> DialogSpec.builder(DialogKind.Notice.ok("OK"), null).build());
-            assertThrows(IllegalArgumentException.class,
-                    () -> DialogSpec.builder(DialogKind.Notice.ok("OK"), "").build());
+        }
+
+        @Test
+        @DisplayName("an empty title is allowed - it hides the header, which is a real design")
+        void emptyTitleAllowed() {
+            assertDoesNotThrow(() -> DialogSpec.builder(DialogKind.Notice.ok("OK"), "").build());
         }
 
         @Test

@@ -37,7 +37,9 @@ public record DialogSpec(DialogKind kind, String title, String externalTitle, Li
 
     public DialogSpec {
         DialogValidation.requireNonNull(kind, "kind");
-        title = DialogValidation.requireText(title, "title");
+        // Vanilla requires the title field to be present, not to be non-empty. An empty title is a legitimate
+        // design - the screen's header bar disappears and the content carries itself - so only null is rejected.
+        DialogValidation.requireNonNull(title, "title");
         DialogValidation.requireNonNull(afterAction, "afterAction");
         body = body == null ? List.of() : List.copyOf(body);
         inputs = inputs == null ? List.of() : List.copyOf(inputs);
