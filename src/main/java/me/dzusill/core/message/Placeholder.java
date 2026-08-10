@@ -56,6 +56,17 @@ public final class Placeholder {
     }
 
     /**
+     * Merges another set into this one and returns {@code this} for chaining. Entries in {@code other} win, so a caller
+     * can hand a generic set and then override one part of it.
+     */
+    public Placeholder and(Placeholder other) {
+        if (other != null) {
+            values.putAll(other.values);
+        }
+        return this;
+    }
+
+    /**
      * Applies every substitution to the given raw string, replacing both {@code %key%} and {@code {key}} forms.
      */
     public String apply(String input) {
