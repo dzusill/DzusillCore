@@ -8,9 +8,22 @@
 # plugin works without a database.
 enabled: false
 
-# Backend type: MYSQL or POSTGRESQL
-type: MYSQL
+# Backend type: H2, MYSQL or POSTGRESQL
+#
+#   H2         embedded, file-backed, needs no server and no
+#              setup - just flip enabled to true
+#   MYSQL      external server, uses host/port/database below
+#   POSTGRESQL external server, uses host/port/database below
+type: H2
 
+# --- Embedded backends (H2) ---------------------------------
+# Database file. A relative path is resolved against this
+# plugin's own folder; H2 appends .mv.db itself, so leave the
+# extension off. host, port, database and the properties
+# section below are ignored by H2.
+file: data
+
+# --- Server backends (MYSQL, POSTGRESQL) --------------------
 host: localhost
 port: 3306
 database: minecraft
@@ -23,7 +36,8 @@ pool:
   # How long to wait (ms) for a connection before failing
   connection-timeout-ms: 30000
 
-# Extra JDBC driver properties (optional)
+# Extra JDBC driver properties (optional). Ignored by H2,
+# whose driver rejects settings it does not know.
 properties:
   useSSL: "false"
   characterEncoding: "utf8"

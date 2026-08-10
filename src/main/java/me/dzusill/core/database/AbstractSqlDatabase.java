@@ -62,7 +62,7 @@ public abstract class AbstractSqlDatabase implements Database {
         // are opened lazily on first use (always on the async executor, never on main thread).
         config.setMinimumIdle(0);
         config.setInitializationFailTimeout(0);
-        for (Map.Entry<String, String> property : credentials.properties().entrySet()) {
+        for (Map.Entry<String, String> property : type.connectionProperties(credentials).entrySet()) {
             config.addDataSourceProperty(property.getKey(), property.getValue());
         }
         return new HikariDataSource(config);

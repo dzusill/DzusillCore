@@ -137,7 +137,7 @@ DzusillCore. Browse its source to see every framework system in a real context:
 | **Module lifecycle** | `CoreModule[]` array; ordered enable/disable; `ServiceRegistry` for wiring |
 | **Commands** | `@CommandMeta`, `CoreCommand`, `SubCommand` nesting, automatic tab-complete, 6 built-in argument types |
 | **GUIs** | `@MenuMeta`, fluent `button()` API, permission-gated slots, `PaginatedMenu`, `YamlMenuTemplate` |
-| **Database** | MySQL + PostgreSQL via HikariCP, fully async `CompletableFuture` API, `AbstractSqlRepository` |
+| **Database** | Embedded H2 (zero setup) + MySQL + PostgreSQL via HikariCP, fully async `CompletableFuture` API, `AbstractSqlRepository` |
 | **Messaging** | `MessageService` + `messages.yml` + MiniMessage; falls back to legacy section-sign on plain Spigot |
 | **Config** | `AbstractConfig`, comment-preserving YAML, `ConfigManager` reloads all at once |
 | **Cooldowns** | Generic `CooldownManager<K>` keyed by any type (`UUID`, `String`, …) |
@@ -182,7 +182,7 @@ Modules enable in array order and disable in reverse. Each module publishes serv
 | `event` | `CoreListener`, `ListenerRegistry`, `@AutoRegister` |
 | `hook` | `PluginHook`, `HookManager`, Vault/PAPI/Essentials hooks |
 | `storage` | `DataStore`, `AbstractDataStore`, `YamlDataStore` |
-| `database` | `Database`, `MySqlDatabase`/`PostgreSqlDatabase`, `DatabaseManager`, `query/*`, `repository/*` |
+| `database` | `Database`, `H2Database`/`MySqlDatabase`/`PostgreSqlDatabase`, `DatabaseManager`, `query/*`, `repository/*` |
 | `scheduler` | `SchedulerService` (sync/async/delayed/repeating + async-to-sync) |
 | `cooldown` | generic `CooldownManager<K>` |
 | `nms` | `NmsAdapter`, `VersionDetector`, `MinecraftVersion`, version adapters |

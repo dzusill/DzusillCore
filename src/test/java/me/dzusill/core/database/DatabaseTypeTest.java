@@ -41,9 +41,40 @@ class DatabaseTypeTest {
     }
 
     @Test
+    void h2UrlPointsAtTheConfiguredFileInMysqlMode() {
+        DatabaseCredentials creds = new DatabaseCredentials("ignored", 0, "mc", "sa", "", 5, 1000L, Map.of(),
+                "/srv/plugins/Demo/data");
+
+        assertEquals("jdbc:h2:file:/srv/plugins/Demo/data;MODE=MySQL;DATABASE_TO_LOWER=TRUE",
+                DatabaseType.H2.jdbcUrl(creds));
+    }
+
+    @Test
+    void h2UrlFallsBackToTheDatabaseNameWhenNoFileIsSet() {
+        assertEquals("jdbc:h2:file:mc;MODE=MySQL;DATABASE_TO_LOWER=TRUE", DatabaseType.H2.jdbcUrl(CREDS));
+    }
+
+    @Test
+    void h2UpsertUsesMergeSyntax() {
+        String sql = DatabaseType.H2.upsert("t", List.of("id", "a", "b"), List.of("id"));
+
+        assertEquals("MERGE INTO t (id, a, b) KEY (id) VALUES (?, ?, ?)", sql);
+    }
+
+    @Test
+    void h2DropsConnectionPropertiesItsDriverWouldReject() {
+        DatabaseCredentials creds = new DatabaseCredentials("localhost", 0, "mc", "sa", "", 5, 1000L,
+                Map.of("useSSL", "false"), "data");
+
+        assertTrue(DatabaseType.H2.connectionProperties(creds).isEmpty());
+        assertEquals(Map.of("useSSL", "false"), DatabaseType.MYSQL.connectionProperties(creds));
+    }
+
+    @Test
     void fromStringIsCaseInsensitive() {
         assertEquals(DatabaseType.MYSQL, DatabaseType.fromString("mysql"));
         assertEquals(DatabaseType.POSTGRESQL, DatabaseType.fromString("PostgreSQL"));
+        assertEquals(DatabaseType.H2, DatabaseType.fromString("h2"));
     }
 
     @Test

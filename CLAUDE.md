@@ -47,7 +47,7 @@ Modules enable in array order and disable in reverse. Each module publishes serv
 | `nms` | `NmsAdapter` (version abstraction), `VersionDetector`/`MinecraftVersion`, `NmsAdapters` (selector), `NmsModule`, `reflect/Reflection`, `version/*` adapters |
 | `item` | `ItemDataStore` (key/value on an `ItemStack`): `PdcItemDataStore` (native, default) / `NbtApiItemDataStore` (raw NBT, legacy-format compat) |
 | `storage` | `DataStore`, `AbstractDataStore`, `YamlDataStore` |
-| `database` | `Database`, `MySqlDatabase`/`PostgreSqlDatabase`, `DatabaseManager`, `query/*`, `repository/*` |
+| `database` | `Database`, `H2Database`/`MySqlDatabase`/`PostgreSqlDatabase`, `DatabaseManager`, `query/*`, `repository/*` |
 | `scheduler` | `SchedulerService` (sync/async/delayed/repeating + async-to-sync) |
 | `cooldown` | generic `CooldownManager<K>` |
 | `util` | `ItemBuilder`, `ColorUtils`, `LocationUtils`, `TimeUtils`, `NumberUtils`, `TextUtils` |
@@ -86,7 +86,9 @@ When a feature needs `net.minecraft.server` internals (packets, fake entities, p
 
 ### Database
 
-MySQL and PostgreSQL via HikariCP. All `Database` methods are async (`CompletableFuture`). Resume on the main thread with `scheduler.mainThreadExecutor()` before touching the Bukkit API. Schema applied at startup from `schema-mysql.sql` / `schema-postgresql.sql`. The database is optional: `enabled: false` in `database.yml` lets the plugin run without it. For typed models, extend `AbstractSqlRepository<ID, T>`.
+H2, MySQL and PostgreSQL via HikariCP. All `Database` methods are async (`CompletableFuture`). Resume on the main thread with `scheduler.mainThreadExecutor()` before touching the Bukkit API. Schema applied at startup from `schema-<type>.sql` (`schema-h2.sql` / `schema-mysql.sql` / `schema-postgresql.sql`). The database is optional: `enabled: false` in `database.yml` lets the plugin run without it. For typed models, extend `AbstractSqlRepository<ID, T>`.
+
+`H2` is the default and the one to reach for unless the server already runs MySQL: it is embedded and file-backed, so it needs no server, no credentials and no install step. It uses `file:` from `database.yml` (relative paths resolve against the plugin's data folder) and ignores `host`, `port`, `database` and `properties` — H2's driver rejects connection settings it does not recognise, which is why `DatabaseType.H2` drops them in `connectionProperties`. It runs in `MODE=MySQL;DATABASE_TO_LOWER=TRUE`, so a schema written for MySQL applies unchanged; those are creation-time settings baked into the file, so never vary them per connection. Dialect differences (URL shape, upsert statement, accepted properties) all live in `DatabaseType` — add a backend by adding a constant, not by special-casing callers.
 
 **Critical:** Pass a plain Java `ExecutorService` (`Executors.newCachedThreadPool()`) to `DatabaseManager`, **never** `SchedulerService.asyncExecutor()`. `SchemaInitializer` calls `.join()` on the main thread during `onEnable`; Bukkit's scheduler only dispatches tasks after the tick loop starts (after all `onEnable()` calls finish) — using it here causes a deadlock. See `example/module/DatabaseModule.java`.
 

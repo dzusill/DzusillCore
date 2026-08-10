@@ -45,6 +45,7 @@ public final class DatabaseManager implements Service, AutoCloseable {
         return switch (type) {
             case MYSQL -> new MySqlDatabase(credentials, asyncExecutor);
             case POSTGRESQL -> new PostgreSqlDatabase(credentials, asyncExecutor);
+            case H2 -> new H2Database(credentials, asyncExecutor);
         };
     }
 
