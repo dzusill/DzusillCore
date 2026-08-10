@@ -174,6 +174,12 @@ public final class MessageService implements Service, Reloadable {
         warnedAboutLegacyFallback = true;
         plugin.getLogger().warning("Falling back to legacy message delivery: click and hover events will not work and"
                 + " hex colors are downsampled. Neither native Adventure nor adventure-platform is usable here.");
+        Throwable why = NativeAdventure.lastFailure() != null
+                ? NativeAdventure.lastFailure()
+                : NativeAdventure.setupFailure();
+        if (why != null) {
+            plugin.getLogger().log(java.util.logging.Level.WARNING, "  native Adventure was unusable because:", why);
+        }
     }
 
     /**
