@@ -3,10 +3,19 @@ package me.dzusill.core.command;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandMap;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.PluginIdentifiableCommand;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.server.ServerCommandEvent;
 import org.jetbrains.annotations.NotNull;
 
 import me.dzusill.core.CorePlugin;
@@ -53,7 +62,105 @@ public final class CommandRegistry implements Service {
      */
     public void register(CoreCommand command) {
         command.init(plugin, messages);
-        commandMap.register(fallbackPrefix, new BridgeCommand(command));
+        BridgeCommand bridge = new BridgeCommand(command);
+        commandMap.register(fallbackPrefix, bridge);
+        captured.add(command.name().toLowerCase(Locale.ROOT));
+        for (String alias : command.aliases()) {
+            captured.add(alias.toLowerCase(Locale.ROOT));
+        }
+        armLabelCapture();
+    }
+
+    /**
+     * Makes sure a name we registered reaches us and not the server's built-in command of the same name.
+     *
+     * <p>
+     * Minecraft ships {@code /msg} (aliases {@code /tell}, {@code /w}), {@code /tp} and others. Registering a plugin
+     * command with the same name is not enough: our command does land in the {@link CommandMap}, but Paper dispatches
+     * through Brigadier, where the vanilla node still sits on that name and answers first. Ours stays reachable only as
+     * {@code /plugin:name}. It fails silently, which is the dangerous part - {@code /msg} looks like it works while
+     * being the vanilla one, which no plugin logs, no ignore list applies to, and no chat filter sees.
+     * </p>
+     *
+     * <p>
+     * Removing the Brigadier node would mean reflecting into the dispatcher's internals, which change shape between
+     * Minecraft versions. Rewriting the label before dispatch does the same job using only public events, and keeps
+     * working on versions that did not exist when this was written.
+     * </p>
+     *
+     * <p>
+     * Only labels this framework registered are rewritten, and only when nothing else on the server owns them as a
+     * plugin command - two plugins claiming one name stays a server configuration to resolve, not something decided
+     * here by load order.
+     * </p>
+     */
+    private void armLabelCapture() {
+        if (captureArmed) {
+            return;
+        }
+        captureArmed = true;
+        Bukkit.getPluginManager().registerEvents(new Listener() {
+
+            @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+            public void onPlayerCommand(PlayerCommandPreprocessEvent event) {
+                String rewritten = rewrite(event.getMessage().substring(1));
+                if (rewritten != null) {
+                    event.setMessage("/" + rewritten);
+                }
+            }
+
+            @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+            public void onConsoleCommand(ServerCommandEvent event) {
+                String rewritten = rewrite(event.getCommand());
+                if (rewritten != null) {
+                    event.setCommand(rewritten);
+                }
+            }
+        }, plugin);
+    }
+
+    /**
+     * @return {@code commandLine} with its label namespaced to this plugin, or {@code null} to leave it alone
+     */
+    private String rewrite(String commandLine) {
+        int space = commandLine.indexOf(' ');
+        String label = (space < 0 ? commandLine : commandLine.substring(0, space)).toLowerCase(Locale.ROOT);
+        if (label.indexOf(':') >= 0 || !captured.contains(label)) {
+            return null;
+        }
+        Command owner = commandMap.getCommand(label);
+        if (owner instanceof PluginIdentifiableCommand) {
+            // Another plugin holds this name outright. Not ours to take.
+            return null;
+        }
+        return fallbackPrefix + ":" + commandLine;
+    }
+
+    private final Set<String> captured = new java.util.HashSet<>();
+    private boolean captureArmed;
+
+    /**
+     * The command map's backing map, or {@code null} when it cannot be reached.
+     *
+     * <p>
+     * {@code unregister} alone leaves the entry in place on some versions, so the label is removed directly as well.
+     * Reflective because {@code getKnownCommands} is Paper-only and this framework compiles against Spigot.
+     * </p>
+     */
+    @SuppressWarnings("unchecked")
+    private Map<String, Command> knownCommands() {
+        try {
+            java.lang.reflect.Method accessor = commandMap.getClass().getMethod("getKnownCommands");
+            return (Map<String, Command>) accessor.invoke(commandMap);
+        } catch (ReflectiveOperationException | RuntimeException noAccessor) {
+            try {
+                java.lang.reflect.Field field = commandMap.getClass().getDeclaredField("knownCommands");
+                field.setAccessible(true);
+                return (Map<String, Command>) field.get(commandMap);
+            } catch (ReflectiveOperationException | RuntimeException unreachable) {
+                return null;
+            }
+        }
     }
 
     /**
