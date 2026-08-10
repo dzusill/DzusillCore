@@ -1,4 +1,4 @@
-package me.dzusill.core.example.module;
+package me.dzusill.core.bootstrap;
 
 import me.dzusill.core.CorePlugin;
 import me.dzusill.core.config.ConfigManager;

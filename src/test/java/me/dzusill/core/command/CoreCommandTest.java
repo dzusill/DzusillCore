@@ -9,9 +9,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import me.dzusill.core.CorePlugin;
+import me.dzusill.core.DzusillCorePlugin;
 import me.dzusill.core.command.argument.Arguments;
 import me.dzusill.core.command.meta.CommandMeta;
-import me.dzusill.core.example.ExamplePlugin;
 
 import be.seeseemelk.mockbukkit.MockBukkit;
 import be.seeseemelk.mockbukkit.ServerMock;
@@ -33,7 +33,7 @@ class CoreCommandTest {
     @BeforeEach
     void setUp() {
         server = MockBukkit.mock();
-        plugin = MockBukkit.load(ExamplePlugin.class);
+        plugin = MockBukkit.load(DzusillCorePlugin.class);
     }
 
     @AfterEach

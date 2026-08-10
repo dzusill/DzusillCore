@@ -1,4 +1,4 @@
-package me.dzusill.core.example.module;
+package me.dzusill.core.bootstrap;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;

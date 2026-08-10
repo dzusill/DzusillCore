@@ -14,9 +14,9 @@ import org.junit.jupiter.api.Test;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
+import me.dzusill.core.database.PlayerRecord;
+import me.dzusill.core.database.PlayerRepository;
 import me.dzusill.core.database.repository.SqlDataStore;
-import me.dzusill.core.example.database.PlayerRecord;
-import me.dzusill.core.example.database.PlayerRepository;
 
 /**
  * Exercises the full database stack (Database -> repository / SqlDataStore) against an in-memory H2 instance in

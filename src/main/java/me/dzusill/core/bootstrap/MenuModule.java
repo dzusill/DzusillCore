@@ -1,8 +1,7 @@
-package me.dzusill.core.example.module;
+package me.dzusill.core.bootstrap;
 
 import me.dzusill.core.CorePlugin;
 import me.dzusill.core.event.ListenerRegistry;
-import me.dzusill.core.example.menu.ShopMenu;
 import me.dzusill.core.menu.MenuListener;
 import me.dzusill.core.menu.MenuManager;
 import me.dzusill.core.menu.MenuRegistry;
@@ -33,9 +32,10 @@ public final class MenuModule extends AbstractModule {
         this.menuManager = new MenuManager(plugin);
         provide(MenuManager.class, menuManager);
 
+        // No menus are registered here. The framework owns the subsystem; the menus belong to whichever plugin
+        // needs them. A demo "Example Shop" used to be registered at this line and was reachable by every player.
         MenuRegistry menus = new MenuRegistry(plugin, menuManager, service(MessageService.class));
         provide(MenuRegistry.class, menus);
-        menus.register("shop", ShopMenu::new);
 
         ListenerRegistry listeners = service(ListenerRegistry.class);
         listeners.register(new MenuListener(plugin));

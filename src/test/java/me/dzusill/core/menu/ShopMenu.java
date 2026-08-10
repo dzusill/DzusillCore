@@ -1,4 +1,4 @@
-package me.dzusill.core.example.menu;
+package me.dzusill.core.menu;
 
 import org.bukkit.Material;
 

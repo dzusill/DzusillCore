@@ -1,4 +1,4 @@
-package me.dzusill.core.example.database;
+package me.dzusill.core.database;
 
 import java.util.UUID;
 

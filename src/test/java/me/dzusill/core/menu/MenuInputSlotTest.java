@@ -17,7 +17,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import me.dzusill.core.CorePlugin;
-import me.dzusill.core.example.ExamplePlugin;
+import me.dzusill.core.DzusillCorePlugin;
 
 import be.seeseemelk.mockbukkit.MockBukkit;
 import be.seeseemelk.mockbukkit.ServerMock;
@@ -32,7 +32,7 @@ class MenuInputSlotTest {
     @BeforeEach
     void setUp() {
         server = MockBukkit.mock();
-        plugin = MockBukkit.load(ExamplePlugin.class);
+        plugin = MockBukkit.load(DzusillCorePlugin.class);
     }
 
     @AfterEach

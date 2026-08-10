@@ -14,8 +14,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import me.dzusill.core.CorePlugin;
+import me.dzusill.core.DzusillCorePlugin;
 import me.dzusill.core.dialog.spi.DialogValues;
-import me.dzusill.core.example.ExamplePlugin;
 import me.dzusill.core.message.MessageService;
 import me.dzusill.core.prompt.ChatPromptService;
 import me.dzusill.core.scheduler.SchedulerService;
@@ -38,7 +38,7 @@ class ChatDialogFallbackTest {
     @BeforeEach
     void setUp() {
         server = MockBukkit.mock();
-        plugin = MockBukkit.load(ExamplePlugin.class);
+        plugin = MockBukkit.load(DzusillCorePlugin.class);
         MessageService messages = new MessageService(plugin);
         fallback = new ChatDialogFallback(messages,
                 new ChatPromptService(plugin, new SchedulerService(plugin), messages));

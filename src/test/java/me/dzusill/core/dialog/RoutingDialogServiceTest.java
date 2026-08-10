@@ -21,10 +21,10 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import me.dzusill.core.CorePlugin;
+import me.dzusill.core.DzusillCorePlugin;
 import me.dzusill.core.dialog.spi.DialogBackend;
 import me.dzusill.core.dialog.spi.DialogCallbackSink;
 import me.dzusill.core.dialog.spi.DialogValues;
-import me.dzusill.core.example.ExamplePlugin;
 import me.dzusill.core.scheduler.SchedulerService;
 
 import be.seeseemelk.mockbukkit.MockBukkit;
@@ -87,7 +87,7 @@ class RoutingDialogServiceTest {
     @BeforeEach
     void setUp() {
         server = MockBukkit.mock();
-        plugin = MockBukkit.load(ExamplePlugin.class);
+        plugin = MockBukkit.load(DzusillCorePlugin.class);
         pending = new PendingDialogs();
         dialogs = new RoutingDialogService(plugin, new SchedulerService(plugin), pending, DialogFallback.none());
         alice = server.addPlayer("Alice");

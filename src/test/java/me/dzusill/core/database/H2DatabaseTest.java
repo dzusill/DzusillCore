@@ -12,8 +12,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import me.dzusill.core.example.database.PlayerRecord;
-import me.dzusill.core.example.database.PlayerRepository;
+import me.dzusill.core.database.PlayerRecord;
+import me.dzusill.core.database.PlayerRepository;
 
 /**
  * Drives the embedded backend end to end - real driver, real file, H2's own MERGE upsert - rather than the

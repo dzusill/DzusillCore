@@ -14,7 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import me.dzusill.core.CorePlugin;
-import me.dzusill.core.example.ExamplePlugin;
+import me.dzusill.core.DzusillCorePlugin;
 import me.dzusill.core.message.MessageService;
 import me.dzusill.core.scheduler.SchedulerService;
 
@@ -36,7 +36,7 @@ class ChatPromptServiceTest {
     @BeforeEach
     void setUp() {
         server = MockBukkit.mock();
-        plugin = MockBukkit.load(ExamplePlugin.class);
+        plugin = MockBukkit.load(DzusillCorePlugin.class);
         clock = new long[]{1_000L};
         prompts = new ChatPromptService(plugin, new SchedulerService(plugin), new MessageService(plugin),
                 () -> clock[0]);

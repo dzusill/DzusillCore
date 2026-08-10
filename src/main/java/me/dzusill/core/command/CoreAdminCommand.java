@@ -1,4 +1,4 @@
-package me.dzusill.core.example.command;
+package me.dzusill.core.command;
 
 import me.dzusill.core.command.CommandContext;
 import me.dzusill.core.command.CoreCommand;

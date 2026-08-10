@@ -8,20 +8,20 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import me.dzusill.core.CorePlugin;
-import me.dzusill.core.example.ExamplePlugin;
+import me.dzusill.core.DzusillCorePlugin;
 
 import be.seeseemelk.mockbukkit.MockBukkit;
 import be.seeseemelk.mockbukkit.ServerMock;
 import be.seeseemelk.mockbukkit.entity.PlayerMock;
 
 /**
- * Exercises register / open-by-key / permission gating, the GUI analogue of {@code CommandRegistryTest}. The example
- * {@code "shop"} menu is registered by {@code MenuModule}.
+ * Exercises register / open-by-key / permission gating, the GUI analogue of {@code CommandRegistryTest}. The framework
+ * registers no menus itself - menus belong to whichever plugin needs them.
  *
  * <p>
  * The allow/deny paths use a {@link TestMenu} whose {@code open()} is overridden to a no-op: MockBukkit cannot build a
- * custom-holder inventory (it throws and the real {@link me.dzusill.core.example.menu.ShopMenu} open path can only be
- * verified manually), so the test menu lets us assert the registry's routing and permission decision deterministically.
+ * custom-holder inventory (it throws), so the test menu lets us assert the registry's routing and permission decision
+ * deterministically.
  * </p>
  */
 class MenuRegistryTest {
@@ -33,7 +33,7 @@ class MenuRegistryTest {
     @BeforeEach
     void setUp() {
         server = MockBukkit.mock();
-        plugin = MockBukkit.load(ExamplePlugin.class);
+        plugin = MockBukkit.load(DzusillCorePlugin.class);
         registry = plugin.services().get(MenuRegistry.class);
     }
 
@@ -43,9 +43,17 @@ class MenuRegistryTest {
     }
 
     @Test
-    void registersExampleMenuByKey() {
-        assertTrue(registry.isRegistered("shop"));
-        assertTrue(registry.isRegistered("SHOP"));
+    void theFrameworkRegistersNoMenusOfItsOwn() {
+        // A demo "shop" menu used to be registered here by MenuModule, on every server using the framework.
+        assertFalse(registry.isRegistered("shop"));
+    }
+
+    @Test
+    void aRegisteredKeyIsFoundCaseInsensitively() {
+        registry.register("Vault", (pl, ctx) -> new TestMenu(pl, ctx, ""));
+
+        assertTrue(registry.isRegistered("vault"));
+        assertTrue(registry.isRegistered("VAULT"));
         assertFalse(registry.isRegistered("does-not-exist"));
     }
 
