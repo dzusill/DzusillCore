@@ -1,5 +1,5 @@
 # ============================================================
-#  DzusillCore - user-facing messages (MiniMessage format)
+#  ${plugin.name} - user-facing messages (MiniMessage format)
 #  <prefix> is replaced by the prefix defined below.
 #  Placeholders: %name%, %target%, %usage% ... or positional {0}, {1}
 # ============================================================

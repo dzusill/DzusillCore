@@ -9,12 +9,17 @@ DzusillCore is a reusable Paper plugin framework/template (Paper 1.21.1, Java 21
 ## Build & test
 
 ```bash
-mvn package          # compile + shade → target/DzusillCore-<version>.jar
-mvn test             # MockBukkit + JUnit 5 suite
+mvn package             # compile + shade → target/DzusillCore-<version>.jar
+mvn package -Poberon    # white-label build → target/OberonCore-<version>.jar
+mvn test                # MockBukkit + JUnit 5 suite
 mvn test -Dtest=FooTest   # single test class
 ```
 
 The shade plugin relocates HikariCP to avoid classpath conflicts. The plugin main class must **not** be `final` (MockBukkit subclasses it for tests).
+
+### White-label builds
+
+`plugin.name` / `plugin.description` (pom properties, filtered into `plugin.yml` and the config headers) carry the server-visible branding: the name in `/plugins`, the data folder and the jar name. A client build overrides them from a profile — see `oberon` — and changes nothing else: same `me.dzusill.core` package, same API, same relocations, so a plugin built against the standard artifact runs on the rebranded jar unchanged. The only thing a consumer must match is `depend: [<plugin.name>]` in its own `plugin.yml`. Add a client by adding a profile, never by forking the sources.
 
 ## Architecture
 

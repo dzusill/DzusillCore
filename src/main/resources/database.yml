@@ -1,5 +1,5 @@
 # ============================================================
-#  DzusillCore - database connection
+#  ${plugin.name} - database connection
 #  Keep this file out of version control if it holds real
 #  credentials. The plugin runs fine with enabled: false.
 # ============================================================

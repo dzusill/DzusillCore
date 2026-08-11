@@ -23,7 +23,26 @@
     <properties>
         <java.version>17</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- Server-visible branding: the plugin.yml name, the jar name and the data folder.
+             A white-label build overrides these from a profile (see `oberon` below). The Java
+             package stays me.dzusill.core, so a rebranded core is binary-identical to this one
+             and downstream plugins only have to point `depend` at the new name. -->
+        <plugin.name>DzusillCore</plugin.name>
+        <plugin.description>Reusable Paper plugin template framework</plugin.description>
     </properties>
+
+    <profiles>
+        <!-- mvn package -Poberon → target/OberonCore-<version>.jar
+             Same code, the client's server name on it. Plugins that run against this build
+             need `depend: [OberonCore]`; no recompile, the API is unchanged. -->
+        <profile>
+            <id>oberon</id>
+            <properties>
+                <plugin.name>OberonCore</plugin.name>
+                <plugin.description>Core framework for the Oberon network</plugin.description>
+            </properties>
+        </profile>
+    </profiles>
 
     <repositories>
         <repository>
@@ -238,7 +257,7 @@
     </dependencies>
 
     <build>
-        <finalName>${project.name}-${project.version}</finalName>
+        <finalName>${plugin.name}-${project.version}</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

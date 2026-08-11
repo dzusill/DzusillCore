@@ -1,8 +1,8 @@
-name: DzusillCore
+name: ${plugin.name}
 version: '${project.version}'
 main: me.dzusill.core.DzusillCorePlugin
 api-version: '1.21'
-description: Reusable Paper plugin template framework
+description: ${plugin.description}
 authors: [dzusill]
 softdepend: [Vault, PlaceholderAPI, Essentials]
 # Paper, Purpur and Folia. The scheduler layer (me.dzusill.core.scheduler) picks the regionised
@@ -14,7 +14,7 @@ folia-supported: true
 
 permissions:
   core.admin:
-    description: Grants access to all DzusillCore administration commands
+    description: Grants access to all ${plugin.name} administration commands
     default: op
   core.reload:
     description: Allows reloading the plugin configuration
