@@ -176,6 +176,10 @@ public final class CommandRegistry implements Service {
                 }
             }
         }, plugin);
+
+        // On Paper, a player's completion never reaches the event above for a name somebody else owns in Brigadier
+        // — which is the only case that needs help. See PaperTabCompleteBridge.
+        PaperTabCompleteBridge.register(plugin, this::completionsFor);
     }
 
     /**

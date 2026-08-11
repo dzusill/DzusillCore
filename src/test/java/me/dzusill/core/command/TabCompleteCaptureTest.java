@@ -10,23 +10,22 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import be.seeseemelk.mockbukkit.MockBukkit;
-import be.seeseemelk.mockbukkit.ServerMock;
-import be.seeseemelk.mockbukkit.entity.PlayerMock;
-
 import me.dzusill.core.CorePlugin;
 import me.dzusill.core.DzusillCorePlugin;
 import me.dzusill.core.command.argument.Arguments;
 import me.dzusill.core.command.meta.CommandMeta;
+
+import be.seeseemelk.mockbukkit.MockBukkit;
+import be.seeseemelk.mockbukkit.ServerMock;
+import be.seeseemelk.mockbukkit.entity.PlayerMock;
 
 /**
  * Tab completion for a command name the server, or another plugin, also owns.
  *
  * <p>
  * The registry rewrites the label on execution, but completion never passes through
- * {@code PlayerCommandPreprocessEvent} — so before this, a captured name <em>ran</em> as ours while
- * <em>completing</em> as theirs. It was reported exactly that way: "the commands that don't tab complete still work
- * when they are used".
+ * {@code PlayerCommandPreprocessEvent} — so before this, a captured name <em>ran</em> as ours while <em>completing</em>
+ * as theirs. It was reported exactly that way: "the commands that don't tab complete still work when they are used".
  * </p>
  */
 class TabCompleteCaptureTest {
