@@ -12,18 +12,23 @@ import me.dzusill.core.message.Messages;
 import me.dzusill.core.message.Placeholder;
 
 /**
- * Resolves a token to a currently-online {@link Player}, suggesting online player names for autocomplete. Fails with
- * {@link Messages#PLAYER_NOT_FOUND} when the player is offline/unknown.
+ * Resolves a token to an online {@link Player}, accepting the start of a name as well as the whole thing.
+ *
+ * <p>
+ * See {@link PlayerLookup} for why an ambiguous fragment is refused rather than guessed.
+ * </p>
  */
 public final class OnlinePlayerArgument implements ArgumentType<Player> {
 
     @Override
     public Player parse(CommandContext context, String raw) throws CommandException {
-        Player player = Bukkit.getPlayerExact(raw);
-        if (player == null) {
-            throw new CommandException(Messages.PLAYER_NOT_FOUND, Placeholder.of("name", raw));
+        List<Player> ambiguous = PlayerLookup.ambiguous(raw);
+        if (!ambiguous.isEmpty()) {
+            throw new CommandException(Messages.PLAYER_AMBIGUOUS,
+                    Placeholder.of("name", raw).and("players", PlayerLookup.names(ambiguous)));
         }
-        return player;
+        return PlayerLookup.online(raw)
+                .orElseThrow(() -> new CommandException(Messages.PLAYER_NOT_FOUND, Placeholder.of("name", raw)));
     }
 
     @Override

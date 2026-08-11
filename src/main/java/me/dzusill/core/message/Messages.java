@@ -14,6 +14,8 @@ public final class Messages {
     public static final String INVALID_USAGE = "invalid-usage";
     public static final String INVALID_NUMBER = "invalid-number";
     public static final String PLAYER_NOT_FOUND = "player-not-found";
+    /** More than one online player starts with what was typed; asks for another letter rather than guessing. */
+    public static final String PLAYER_AMBIGUOUS = "player-ambiguous";
     public static final String RELOAD_SUCCESS = "reload-success";
     public static final String RELOAD_FAILED = "reload-failed";
     public static final String COMMAND_ERROR = "command-error";

@@ -16,6 +16,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.server.ServerCommandEvent;
+import org.bukkit.event.server.TabCompleteEvent;
 import org.jetbrains.annotations.NotNull;
 
 import me.dzusill.core.CorePlugin;
@@ -64,11 +65,61 @@ public final class CommandRegistry implements Service {
         command.init(plugin, messages);
         BridgeCommand bridge = new BridgeCommand(command);
         commandMap.register(fallbackPrefix, bridge);
-        captured.add(command.name().toLowerCase(Locale.ROOT));
+        captured.put(command.name().toLowerCase(Locale.ROOT), bridge);
         for (String alias : command.aliases()) {
-            captured.add(alias.toLowerCase(Locale.ROOT));
+            captured.put(alias.toLowerCase(Locale.ROOT), bridge);
+        }
+        if (command.takeNameFromOtherPlugins()) {
+            forced.add(command.name().toLowerCase(Locale.ROOT));
+            for (String alias : command.aliases()) {
+                forced.add(alias.toLowerCase(Locale.ROOT));
+            }
         }
         armLabelCapture();
+    }
+
+    /**
+     * Reports, for every name this registry claimed, who the server will actually hand it to.
+     *
+     * <p>
+     * Exists because the failure it describes is invisible. A command whose name another plugin owns still answers when
+     * typed - the label is rewritten below - so nothing looks wrong until somebody notices it does not tab-complete, or
+     * that the other plugin's version is the one running. Printing the answer turns that into something a server owner
+     * can read at startup.
+     * </p>
+     *
+     * @return one line per registered label, e.g. {@code /tphere -> SomeTpaPlugin}
+     */
+    public List<String> ownershipReport() {
+        List<String> lines = new java.util.ArrayList<>();
+        for (Map.Entry<String, BridgeCommand> entry : new java.util.TreeMap<>(captured).entrySet()) {
+            Command owner = commandMap.getCommand(entry.getKey());
+            String who;
+            if (owner == entry.getValue()) {
+                who = plugin.getName();
+            } else if (owner instanceof PluginIdentifiableCommand identifiable) {
+                who = identifiable.getPlugin().getName() + (forced.contains(entry.getKey()) ? " (taken on use)" : "");
+            } else if (owner == null) {
+                who = plugin.getName();
+            } else {
+                who = "the server (taken on use)";
+            }
+            lines.add("/" + entry.getKey() + " -> " + who);
+        }
+        return lines;
+    }
+
+    /** @return the labels another plugin owns and we are not configured to take */
+    public List<String> conflicts() {
+        List<String> lines = new java.util.ArrayList<>();
+        for (Map.Entry<String, BridgeCommand> entry : new java.util.TreeMap<>(captured).entrySet()) {
+            Command owner = commandMap.getCommand(entry.getKey());
+            if (owner != entry.getValue() && owner instanceof PluginIdentifiableCommand identifiable
+                    && !forced.contains(entry.getKey())) {
+                lines.add("/" + entry.getKey() + " is owned by " + identifiable.getPlugin().getName());
+            }
+        }
+        return lines;
     }
 
     /**
@@ -116,7 +167,57 @@ public final class CommandRegistry implements Service {
                     event.setCommand(rewritten);
                 }
             }
+
+            @EventHandler(priority = EventPriority.HIGH)
+            public void onTabComplete(TabCompleteEvent event) {
+                List<String> ours = completionsFor(event.getSender(), event.getBuffer());
+                if (ours != null) {
+                    event.setCompletions(ours);
+                }
+            }
         }, plugin);
+    }
+
+    /**
+     * Completions for a buffer whose command we answer, or {@code null} when it is none of our business.
+     *
+     * <p>
+     * Rewriting the label on execution is not enough on its own. Tab completion never passes through
+     * {@code PlayerCommandPreprocessEvent}, so a name owned by vanilla or another plugin ends up <em>running</em> as
+     * ours while <em>completing</em> as theirs - the command works when typed in full and suggests nothing, which is
+     * exactly the shape this was reported in. This closes that gap on the same ownership rule.
+     * </p>
+     */
+    private List<String> completionsFor(CommandSender sender, String buffer) {
+        if (buffer == null || !buffer.startsWith("/")) {
+            // Chat completion, not a command.
+            return null;
+        }
+        String line = buffer.substring(1);
+        int space = line.indexOf(' ');
+        if (space < 0) {
+            // Still typing the command name itself; the server's own list is the right answer.
+            return null;
+        }
+        String label = line.substring(0, space).toLowerCase(Locale.ROOT);
+        if (label.indexOf(':') >= 0) {
+            label = label.substring(label.indexOf(':') + 1);
+        }
+        BridgeCommand ours = captured.get(label);
+        if (ours == null || !mayAnswer(label)) {
+            return null;
+        }
+        String[] args = line.substring(space + 1).split(" ", -1);
+        return ours.tabComplete(sender, label, args);
+    }
+
+    /** @return whether the label is one we are allowed to answer for — the same rule the execute path uses */
+    private boolean mayAnswer(String label) {
+        if (forced.contains(label)) {
+            return true;
+        }
+        Command owner = commandMap.getCommand(label);
+        return !(owner instanceof PluginIdentifiableCommand identifiable) || identifiable.getPlugin().equals(plugin);
     }
 
     /**
@@ -125,18 +226,26 @@ public final class CommandRegistry implements Service {
     private String rewrite(String commandLine) {
         int space = commandLine.indexOf(' ');
         String label = (space < 0 ? commandLine : commandLine.substring(0, space)).toLowerCase(Locale.ROOT);
-        if (label.indexOf(':') >= 0 || !captured.contains(label)) {
-            return null;
-        }
-        Command owner = commandMap.getCommand(label);
-        if (owner instanceof PluginIdentifiableCommand) {
-            // Another plugin holds this name outright. Not ours to take.
+        if (label.indexOf(':') >= 0 || !captured.containsKey(label) || !mayAnswer(label)) {
             return null;
         }
         return fallbackPrefix + ":" + commandLine;
     }
 
-    private final Set<String> captured = new java.util.HashSet<>();
+    /** Every label we registered, mapped to the command that answers it. */
+    private final Map<String, BridgeCommand> captured = new java.util.HashMap<>();
+
+    /**
+     * Labels the owning plugin asked us to take even from another plugin.
+     *
+     * <p>
+     * Off unless asked for. Two plugins claiming one name is a server configuration to resolve, not something to settle
+     * here by load order - but a server owner who knows their teleport plugin only uses {@code /tphere} as an alias
+     * needs a way to say so.
+     * </p>
+     */
+    private final Set<String> forced = new java.util.HashSet<>();
+
     private boolean captureArmed;
 
     /**

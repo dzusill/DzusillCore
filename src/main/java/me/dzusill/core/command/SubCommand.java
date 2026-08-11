@@ -32,6 +32,7 @@ public abstract class SubCommand {
     private String description = "";
     private String permission = "";
     private boolean playerOnly = false;
+    private boolean takeName = false;
     private final List<String> aliases = new ArrayList<>();
     private final Map<String, SubCommand> children = new LinkedHashMap<>();
     private final List<ArgumentParser.Spec> argSpecs = new ArrayList<>();
@@ -66,6 +67,26 @@ public abstract class SubCommand {
     protected SubCommand permission(String permission) {
         this.permission = permission;
         return this;
+    }
+
+    /**
+     * Asks the registry to answer for this command's name even when another plugin registered it first.
+     *
+     * <p>
+     * Off by default, and it should stay off for almost everything: two plugins claiming one name is a server
+     * configuration to resolve, not something to settle by load order. It exists for the case where an owner knows the
+     * other plugin only uses the name as an alias - a teleport plugin holding {@code /tphere} - and wants this one to
+     * win.
+     * </p>
+     */
+    protected SubCommand takeNameFromOtherPlugins(boolean take) {
+        this.takeName = take;
+        return this;
+    }
+
+    /** @return whether this command should be answered even when another plugin owns the name */
+    public boolean takeNameFromOtherPlugins() {
+        return takeName;
     }
 
     protected SubCommand description(String description) {

@@ -13,6 +13,10 @@ unknown-command: "<prefix><red>Unknown subcommand. <gray>Use %usage%"
 invalid-usage: "<prefix><yellow>Usage: <gray>%usage%"
 invalid-number: "<prefix><red>'%input%' is not a valid number."
 player-not-found: "<prefix><red>Player '%name%' was not found."
+# More than one online player starts with what was typed. Naming them is the
+# point: the staff member adds one letter instead of guessing, and nobody gets
+# teleported by mistake.
+player-ambiguous: "<prefix><red>'%name%' matches several players: <gray>%players%"
 reload-success: "<prefix><green>Configuration reloaded."
 reload-failed: "<prefix><red>Reload failed, check the console for details."
 command-error: "<prefix><red>An unexpected error occurred running that command. Check the console."
