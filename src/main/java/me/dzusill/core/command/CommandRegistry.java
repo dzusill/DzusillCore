@@ -17,6 +17,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.server.ServerCommandEvent;
 import org.bukkit.event.server.TabCompleteEvent;
+import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
 import me.dzusill.core.CorePlugin;
@@ -95,12 +96,11 @@ public final class CommandRegistry implements Service {
         for (Map.Entry<String, BridgeCommand> entry : new java.util.TreeMap<>(captured).entrySet()) {
             Command owner = commandMap.getCommand(entry.getKey());
             String who;
-            if (owner == entry.getValue()) {
+            if (owner == entry.getValue() || owner == null) {
                 who = plugin.getName();
-            } else if (owner instanceof PluginIdentifiableCommand identifiable) {
-                who = identifiable.getPlugin().getName() + (forced.contains(entry.getKey()) ? " (taken on use)" : "");
-            } else if (owner == null) {
-                who = plugin.getName();
+            } else if (ownedByAnotherPlugin(entry.getKey())) {
+                who = ((PluginIdentifiableCommand) owner).getPlugin().getName()
+                        + (forced.contains(entry.getKey()) ? " (taken on use)" : "");
             } else {
                 who = "the server (taken on use)";
             }
@@ -114,9 +114,9 @@ public final class CommandRegistry implements Service {
         List<String> lines = new java.util.ArrayList<>();
         for (Map.Entry<String, BridgeCommand> entry : new java.util.TreeMap<>(captured).entrySet()) {
             Command owner = commandMap.getCommand(entry.getKey());
-            if (owner != entry.getValue() && owner instanceof PluginIdentifiableCommand identifiable
-                    && !forced.contains(entry.getKey())) {
-                lines.add("/" + entry.getKey() + " is owned by " + identifiable.getPlugin().getName());
+            if (owner != entry.getValue() && !forced.contains(entry.getKey()) && ownedByAnotherPlugin(entry.getKey())) {
+                lines.add("/" + entry.getKey() + " is owned by "
+                        + ((PluginIdentifiableCommand) owner).getPlugin().getName());
             }
         }
         return lines;
@@ -220,8 +220,49 @@ public final class CommandRegistry implements Service {
         if (forced.contains(label)) {
             return true;
         }
+        return !ownedByAnotherPlugin(label);
+    }
+
+    /**
+     * Whether a real third-party plugin owns this name.
+     *
+     * <p>
+     * The distinction that matters is between another <em>plugin</em> and the <em>server</em>. A name another plugin
+     * owns is left alone, because two plugins claiming one name is a server configuration to resolve rather than
+     * something to settle here by load order. A name the server owns is ours to take — that is the entire point of the
+     * capture, and vanilla {@code /tp} logs nothing and respects no {@code /tptoggle}.
+     * </p>
+     *
+     * <p>
+     * Asking {@code instanceof PluginIdentifiableCommand} alone used to be enough, back when vanilla commands were
+     * plain wrappers. Newer Paper hands them out owned by an internal plugin, which made every vanilla name look like a
+     * third party's — and the consequence was invisible in the worst way. Execution still reached us through the label
+     * rewrite, but completion declined, Paper fell through to the vanilla Brigadier node, and that node requires
+     * operator. So {@code /tp } suggested players for an admin and nothing at all for the staff the command was granted
+     * to, which reads exactly like a broken plugin and not like a version change.
+     * </p>
+     *
+     * <p>
+     * A plugin the plugin manager does not know is not a plugin: internal ones are never registered with it. That test
+     * needs no version-specific class name and no list of the server's own plugin names to keep up to date.
+     * </p>
+     */
+    private boolean ownedByAnotherPlugin(String label) {
         Command owner = commandMap.getCommand(label);
-        return !(owner instanceof PluginIdentifiableCommand identifiable) || identifiable.getPlugin().equals(plugin);
+        if (!(owner instanceof PluginIdentifiableCommand identifiable)) {
+            return false;
+        }
+        Plugin other;
+        try {
+            other = identifiable.getPlugin();
+        } catch (RuntimeException internalCommand) {
+            // Some internal wrappers throw rather than answer. That is the server's, not a plugin's.
+            return false;
+        }
+        if (other == null || other.equals(plugin)) {
+            return false;
+        }
+        return Bukkit.getPluginManager().getPlugin(other.getName()) == other;
     }
 
     /**

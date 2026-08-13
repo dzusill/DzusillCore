@@ -47,6 +47,20 @@ public final class MessageService implements Service, Reloadable {
     private final Plugin plugin;
     private Config config;
     private String prefix;
+
+    /**
+     * Which category each message key belongs to, filled in by the owning plugin at startup.
+     *
+     * <p>
+     * Kept here rather than in {@code messages.yml} because it is a property of the message, not a preference: a
+     * teleport confirmation is a teleport confirmation whatever a server owner wants done with it. What they choose is
+     * the {@link Presentation}; this only says which lever applies.
+     * </p>
+     */
+    private final java.util.Map<String, MessageCategory> categories = new java.util.HashMap<>();
+
+    /** Volatile: swapped wholesale on reload, so a message being sent never sees half a config. */
+    private volatile PresentationSettings presentation = PresentationSettings.DEFAULTS;
     /**
      * Bridges our relocated Adventure components on plain Spigot. Null when the platform can't initialize — which is
      * expected under MockBukkit, and harmless on Paper where {@link NativeAdventure} handles delivery instead.
@@ -119,15 +133,103 @@ public final class MessageService implements Service, Reloadable {
         return components;
     }
 
+    // --- presentation --------------------------------------------------------
+
+    /**
+     * Files message keys under the categories a server owner configures.
+     *
+     * <p>
+     * Call once at startup with every key the plugin owns. Anything left out is {@link MessageCategory#INFO}, which is
+     * plain chat with no sound — so this is additive, and a plugin that never calls it is unaffected.
+     * </p>
+     */
+    public void categorise(java.util.Map<String, MessageCategory> keys) {
+        categories.putAll(keys);
+    }
+
+    public void categorise(String key, MessageCategory category) {
+        categories.put(key, category);
+    }
+
+    /** Applies the {@code Presentation} block; call again on reload with the freshly read config. */
+    public void presentation(PresentationSettings settings) {
+        this.presentation = settings == null ? PresentationSettings.DEFAULTS : settings;
+    }
+
+    public PresentationSettings presentation() {
+        return presentation;
+    }
+
+    /** @return how {@code key} will be delivered as things stand */
+    public Presentation presentationOf(String key) {
+        return presentation.resolve(key, categories.get(key));
+    }
+
+    // --- sending -------------------------------------------------------------
+
     /**
      * Sends the message at {@code key} to the recipient, applying placeholders.
+     *
+     * <p>
+     * A list-valued key always goes to chat whatever its category says. The action bar holds one line and replaces it
+     * on every write, so a five-line list sent there would show only its last line — silently, and only to the person
+     * it was meant to inform.
+     * </p>
      */
     public void send(CommandSender recipient, String key, Placeholder placeholder) {
         if (config.isList(key)) {
             getList(key, placeholder).forEach(line -> sendComponent(recipient, line));
-        } else {
-            sendComponent(recipient, get(key, placeholder));
+            playSound(recipient, presentationOf(key).sound());
+            return;
         }
+        Presentation how = presentationOf(key);
+        String raw = config.getString(key, key);
+        if (how.channel().chat()) {
+            sendComponent(recipient, render(raw, placeholder, true));
+        }
+        if (how.channel().actionBar()) {
+            // Without the prefix: the action bar is one short line, and a tag repeated on every one of them costs
+            // room that the message itself needs.
+            sendActionBar(recipient, render(raw, placeholder, false));
+        }
+        playSound(recipient, how.sound());
+    }
+
+    private void playSound(CommandSender recipient, SoundSpec sound) {
+        if (sound != null && recipient instanceof org.bukkit.entity.Player player) {
+            sound.play(player);
+        }
+    }
+
+    /**
+     * Shows a component above the recipient's hotbar, by the same three-path fidelity ladder {@link #sendComponent}
+     * uses.
+     *
+     * <p>
+     * The last resort here is Spigot's own action-bar API rather than a chat line: a message the owner asked to keep
+     * out of chat must not end up in chat because the server is old.
+     * </p>
+     */
+    public void sendActionBar(CommandSender recipient, Component component) {
+        if (NativeAdventure.sendActionBar(recipient, component)) {
+            return;
+        }
+        if (audiences != null) {
+            audiences.sender(recipient).sendActionBar(component);
+            return;
+        }
+        if (recipient instanceof Audience audience) {
+            audience.sendActionBar(component);
+            return;
+        }
+        if (recipient instanceof org.bukkit.entity.Player player) {
+            warnLegacyFallbackOnce();
+            player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
+                    net.md_5.bungee.api.chat.TextComponent.fromLegacyText(LEGACY_SECTION.serialize(component)));
+            return;
+        }
+        // The console has no hotbar. Saying it in chat beats saying nothing.
+        sendComponent(recipient, component);
     }
 
     public void send(CommandSender recipient, String key) {
@@ -190,8 +292,17 @@ public final class MessageService implements Service, Reloadable {
     }
 
     private Component render(String raw, Placeholder placeholder) {
-        String withPrefix = raw == null ? "" : raw.replace(PREFIX_TOKEN, prefix);
-        String substituted = placeholder == null ? withPrefix : placeholder.apply(withPrefix);
+        return render(raw, placeholder, true);
+    }
+
+    /**
+     * @param withPrefix
+     *            whether {@code <prefix>} expands to the configured prefix or to nothing — the action bar wants the
+     *            latter
+     */
+    private Component render(String raw, Placeholder placeholder, boolean withPrefix) {
+        String expanded = raw == null ? "" : raw.replace(PREFIX_TOKEN, withPrefix ? prefix : "").trim();
+        String substituted = placeholder == null ? expanded : placeholder.apply(expanded);
         return MINI.deserialize(substituted);
     }
 

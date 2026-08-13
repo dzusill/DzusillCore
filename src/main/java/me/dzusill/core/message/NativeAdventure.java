@@ -37,6 +37,7 @@ final class NativeAdventure {
     private static final Method NATIVE_DESERIALIZE;
     private static final Class<?> NATIVE_AUDIENCE;
     private static final Method NATIVE_SEND;
+    private static final Method NATIVE_SEND_ACTION_BAR;
     private static final Throwable SETUP_FAILURE;
 
     /**
@@ -58,6 +59,7 @@ final class NativeAdventure {
         Method deserialize = null;
         Class<?> audience = null;
         Method send = null;
+        Method actionBar = null;
         Throwable failure = null;
         try {
             Class<?> serializer = Class.forName(ADVENTURE + ".text.serializer.gson.GsonComponentSerializer");
@@ -66,18 +68,21 @@ final class NativeAdventure {
             Class<?> component = Class.forName(ADVENTURE + ".text.Component");
             audience = Class.forName(ADVENTURE + ".audience.Audience");
             send = audience.getMethod("sendMessage", component);
+            actionBar = findActionBar(audience, component);
         } catch (ReflectiveOperationException | RuntimeException | LinkageError ex) {
             // Plain Spigot, or a server without native Adventure. Not an error — MessageService falls back.
             gson = null;
             deserialize = null;
             audience = null;
             send = null;
+            actionBar = null;
             failure = ex;
         }
         NATIVE_GSON = gson;
         NATIVE_DESERIALIZE = deserialize;
         NATIVE_AUDIENCE = audience;
         NATIVE_SEND = send;
+        NATIVE_SEND_ACTION_BAR = actionBar;
         SETUP_FAILURE = failure;
     }
 
@@ -110,6 +115,24 @@ final class NativeAdventure {
         throw new NoSuchMethodException(serializer.getName() + " has no single-argument deserialize(String)");
     }
 
+    /**
+     * Finds {@code sendActionBar} on the server's {@code Audience}.
+     *
+     * <p>
+     * Optional in a way {@code sendMessage} is not: it is absent on very old Adventure releases, and its absence must
+     * leave chat working rather than disabling this path wholesale.
+     * </p>
+     *
+     * @return the method, or {@code null} when this server's Adventure has none
+     */
+    private static Method findActionBar(Class<?> audience, Class<?> component) {
+        try {
+            return audience.getMethod("sendActionBar", component);
+        } catch (NoSuchMethodException tooOld) {
+            return null;
+        }
+    }
+
     /** @return {@code true} when the server exposes its own Adventure, i.e. on Paper and every fork of it */
     static boolean available() {
         return NATIVE_GSON != null && NATIVE_SEND != null;
@@ -126,13 +149,27 @@ final class NativeAdventure {
      *         the reflective hand-off failed — in which case the caller must fall back rather than drop the message
      */
     static boolean send(CommandSender recipient, Component component) {
-        if (!available() || !NATIVE_AUDIENCE.isInstance(recipient)) {
+        return handOff(NATIVE_SEND, recipient, component);
+    }
+
+    /**
+     * Shows {@code component} above the recipient's hotbar through the server's native Adventure.
+     *
+     * @return {@code true} if it was delivered, {@code false} if this path does not apply — the caller must then fall
+     *         back rather than drop it
+     */
+    static boolean sendActionBar(CommandSender recipient, Component component) {
+        return handOff(NATIVE_SEND_ACTION_BAR, recipient, component);
+    }
+
+    private static boolean handOff(Method target, CommandSender recipient, Component component) {
+        if (!available() || target == null || !NATIVE_AUDIENCE.isInstance(recipient)) {
             return false;
         }
         try {
             String json = GsonComponentSerializer.gson().serialize(component);
             Object nativeComponent = NATIVE_DESERIALIZE.invoke(NATIVE_GSON, json);
-            NATIVE_SEND.invoke(recipient, nativeComponent);
+            target.invoke(recipient, nativeComponent);
             return true;
         } catch (ReflectiveOperationException | RuntimeException | LinkageError ex) {
             lastFailure = ex;

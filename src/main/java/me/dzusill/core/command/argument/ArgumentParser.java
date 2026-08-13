@@ -45,7 +45,11 @@ public final class ArgumentParser {
             boolean present = index < args.length && !args[index].isEmpty();
             if (!present) {
                 if (spec.required()) {
-                    throw new CommandException(Messages.INVALID_USAGE, Placeholder.of("usage", usage()));
+                    // The command is part of the usage, not decoration around it: "Usage: <player>" leaves the reader
+                    // to work out which command they were using, which is the one thing they demonstrably got wrong.
+                    String command = commandOf(context, args, offset);
+                    throw new CommandException(Messages.INVALID_USAGE,
+                            Placeholder.of("usage", (command + " " + usage()).trim()).and("cmd", command));
                 }
                 continue;
             }
@@ -65,6 +69,23 @@ public final class ArgumentParser {
         Spec spec = specs.get(relative);
         String token = args[args.length - 1];
         return TextUtils.partialMatches(token, spec.type().suggest(context, token));
+    }
+
+    /**
+     * The command as the sender typed it, routing tokens included.
+     *
+     * <p>
+     * {@code offset} is how many tokens were consumed getting here, which is exactly the subcommand path — so a leaf
+     * comes out {@code /tp} and a routed node {@code /oberonstaff status}, without either having to be told its own
+     * name.
+     * </p>
+     */
+    private static String commandOf(CommandContext context, String[] args, int offset) {
+        StringBuilder line = new StringBuilder("/").append(context.label());
+        for (int i = 0; i < offset && i < args.length; i++) {
+            line.append(' ').append(args[i]);
+        }
+        return line.toString();
     }
 
     /**

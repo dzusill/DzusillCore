@@ -81,6 +81,21 @@ public final class Placeholder {
         return result;
     }
 
+    /**
+     * Adds a substitution only if that key has none yet.
+     *
+     * <p>
+     * For a value the framework can always supply but a call site may know better. The dispatcher fills in
+     * {@code %cmd%} for every command failure this way, so a message can name the command that failed — while an
+     * argument parser that knows the full routed path, {@code /oberonstaff status} rather than {@code /oberonstaff},
+     * keeps the more precise answer it already set.
+     * </p>
+     */
+    public Placeholder orElse(String key, Object value) {
+        values.putIfAbsent(key, String.valueOf(value));
+        return this;
+    }
+
     public boolean isEmpty() {
         return values.isEmpty();
     }
