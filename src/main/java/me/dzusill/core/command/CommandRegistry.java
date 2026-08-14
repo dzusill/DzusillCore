@@ -123,6 +123,41 @@ public final class CommandRegistry implements Service {
     }
 
     /**
+     * Whether this registry registered the label and answers for it.
+     *
+     * <p>
+     * Exists for plugins that inspect commands before they run — a whitelist, an audit log, a cooldown layer. Such a
+     * plugin sees the message <em>after</em> {@link #armLabelCapture()} may have rewritten it into the namespaced form,
+     * and without a way to ask, it cannot tell that rewrite apart from a player typing {@code /plugin:name} to slip
+     * past a list. The answer is the same ownership rule the execute and completion paths use, so all three agree by
+     * construction.
+     * </p>
+     *
+     * @param label
+     *            a command label, with or without a leading slash, namespace or arguments
+     * @return whether the label resolves to a command this registry owns
+     */
+    public boolean owns(String label) {
+        if (label == null) {
+            return false;
+        }
+        String name = label.trim();
+        if (name.startsWith("/")) {
+            name = name.substring(1);
+        }
+        int space = name.indexOf(' ');
+        if (space >= 0) {
+            name = name.substring(0, space);
+        }
+        int colon = name.lastIndexOf(':');
+        if (colon >= 0) {
+            name = name.substring(colon + 1);
+        }
+        name = name.toLowerCase(Locale.ROOT);
+        return captured.containsKey(name) && mayAnswer(name);
+    }
+
+    /**
      * Makes sure a name we registered reaches us and not the server's built-in command of the same name.
      *
      * <p>
