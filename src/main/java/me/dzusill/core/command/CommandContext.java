@@ -24,8 +24,25 @@ public final class CommandContext {
         this.plugin = plugin;
         this.sender = sender;
         this.messages = messages;
-        this.label = label;
+        this.label = plain(label);
         this.args = args;
+    }
+
+    /**
+     * The command as the sender typed it, without the namespace the framework may have added on the way in.
+     *
+     * <p>
+     * A name the server owns is reached by rewriting {@code /msg hi} to {@code /oberonmsg:msg hi} before dispatch, so
+     * the label Bukkit hands back is the internal one. Echoing that into a message told a player their mistake was
+     * {@code Usage: /oberonmsg:msg <player>} — a command they never typed and could not have known about.
+     * </p>
+     */
+    private static String plain(String label) {
+        if (label == null) {
+            return "";
+        }
+        int namespace = label.indexOf(':');
+        return namespace < 0 ? label : label.substring(namespace + 1);
     }
 
     public CorePlugin plugin() {

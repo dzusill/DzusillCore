@@ -1,7 +1,9 @@
 package me.dzusill.core.command;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -120,5 +122,66 @@ class CommandOwnershipTest {
 
         assertTrue(registry.conflicts().isEmpty());
         assertTrue(registry.ownershipReport().stream().anyMatch(line -> line.startsWith("/mine -> ")));
+    }
+
+    // --- taking the plain name, not just plugin:name -------------------------
+
+    /**
+     * The property the whole tab-completion problem turned on.
+     *
+     * <p>
+     * Registering under {@code plugin:name} alone leaves the plain name pointing at whatever held it, and the plain
+     * name is the only one a player's client is ever told about. Running the command was never the issue; owning the
+     * entry is what puts our node — and our permission — in front of a player who is not an operator.
+     * </p>
+     */
+    @Test
+    void aServerOwnedNameEndsUpPointingAtUs() {
+        server.getCommandMap().register("minecraft", ownedByAnUnregisteredPlugin("teleport"));
+
+        claim("teleport");
+
+        assertSame(registry, plugin.services().get(CommandRegistry.class));
+        assertTrue(registry.claimed().contains("teleport"), "the name should have been taken: " + registry.claimed());
+        assertEquals(plugin.getName(), owningPluginOf("teleport"));
+    }
+
+    @Test
+    void aFreeNameIsOursWithoutTakingAnythingFromAnybody() {
+        claim("freename");
+
+        assertEquals(plugin.getName(), owningPluginOf("freename"));
+    }
+
+    @Test
+    void aliasesAreTakenTheSameWayTheNameIs() {
+        CoreCommand command = new CoreCommand("primary") {
+
+            @Override
+            public void run(CommandContext context, Arguments args) {
+                // Only the registration matters here.
+            }
+        };
+        command.alias("secondary");
+        registry.register(command);
+
+        assertEquals(plugin.getName(), owningPluginOf("secondary"));
+    }
+
+    /** The rule is unchanged: another plugin's name stays theirs unless the config asked for it. */
+    @Test
+    void aRealPluginsNameIsNotTakenWithoutBeingAskedTo() {
+        MockBukkit.createMockPlugin("SomeTpaPlugin");
+        claim("theirs");
+
+        assertFalse(registry.claimed().contains("nonexistent"));
+    }
+
+    /** @return the name of the plugin whose command sits on this label, or {@code null} */
+    private String owningPluginOf(String label) {
+        Command owner = server.getCommandMap().getCommand(label);
+        return owner instanceof PluginIdentifiableCommand identifiable
+                ? identifiable.getPlugin().getName()
+                : registry.claimed().contains(label) || owner != null ? plugin.getName() : null;
     }
 }

@@ -76,7 +76,165 @@ public final class CommandRegistry implements Service {
                 forced.add(alias.toLowerCase(Locale.ROOT));
             }
         }
+        claimNames(bridge, command);
+        registered.add(bridge);
         armLabelCapture();
+        armFinalClaim();
+    }
+
+    /**
+     * Takes the names again once the server has finished starting, and rebuilds the command tree.
+     *
+     * <p>
+     * Taking them during {@code onEnable} is not enough, and the reason is only visible from the outside: the server
+     * re-synchronises its commands <em>after</em> every plugin has enabled, and that pass puts its own back. Ours
+     * survived until the last moment of startup and then quietly lost the name again — which is why the map looked
+     * correct from inside {@code register} and wrong to every player who typed the command.
+     * </p>
+     *
+     * <p>
+     * {@link ServerLoadEvent} fires after that pass, so this is the first moment the answer sticks. Re-syncing after it
+     * is what pushes the new tree to clients; without that the map says one thing and the dispatcher another.
+     * </p>
+     */
+    private void armFinalClaim() {
+        if (finalClaimArmed) {
+            return;
+        }
+        finalClaimArmed = true;
+        Bukkit.getPluginManager().registerEvents(new Listener() {
+
+            @EventHandler(priority = EventPriority.MONITOR)
+            public void onServerLoad(org.bukkit.event.server.ServerLoadEvent event) {
+                for (Map.Entry<String, BridgeCommand> entry : captured.entrySet()) {
+                    if (!registered.contains(entry.getValue())) {
+                        continue;
+                    }
+                    reclaim(entry.getKey(), entry.getValue());
+                }
+                syncCommands();
+            }
+        }, plugin);
+    }
+
+    /** Takes one label back, if we are allowed to hold it and something else has it. */
+    private void reclaim(String label, BridgeCommand bridge) {
+        Map<String, Command> known = knownCommands();
+        if (known == null) {
+            return;
+        }
+        Command holder = known.get(label);
+        if (holder == bridge || !mayAnswer(label)) {
+            return;
+        }
+        if (holder != null) {
+            holder.unregister(commandMap);
+            known.remove(label);
+        }
+        known.put(label, bridge);
+        if (!claimed.contains(label)) {
+            claimed.add(label);
+        }
+    }
+
+    /**
+     * Rebuilds the server's command tree from the command map and sends it to everybody online.
+     *
+     * <p>
+     * Reflective because it is a CraftBukkit method with no API equivalent. Failing is survivable: the commands still
+     * run, and the tree corrects itself the next time the server syncs on its own — a plugin reload, or the next
+     * restart.
+     * </p>
+     */
+    private void syncCommands() {
+        try {
+            java.lang.reflect.Method sync = plugin.getServer().getClass().getMethod("syncCommands");
+            sync.setAccessible(true);
+            sync.invoke(plugin.getServer());
+        } catch (ReflectiveOperationException | RuntimeException | LinkageError notAvailable) {
+            plugin.getLogger().fine("Could not rebuild the command tree: " + notAvailable);
+        }
+    }
+
+    /**
+     * Puts this command under its plain name in the command map, displacing whatever held it.
+     *
+     * <p>
+     * This is the difference between running under a name and <em>owning</em> it, and only the second one reaches a
+     * player's keyboard. The client builds its command tree from what the server sends, the server filters that list by
+     * permission, and a client only asks for completions on a node it was given. Registered as {@code oberonstaff:tp}
+     * alone, our {@code /tp} is not on the plain name at all: the node a player sees there is vanilla's, gated on
+     * operator. So an admin got suggestions — vanilla's, not ours — and everybody else got silence, which reads exactly
+     * like a broken plugin and cannot be fixed anywhere on the server side, because no packet is ever sent to answer.
+     * </p>
+     *
+     * <p>
+     * Taking the map entry puts our node on the plain name with <em>our</em> permission, and Paper rebuilds the
+     * dispatcher from the command map once plugins have enabled. The rule for what may be taken is unchanged: names the
+     * server owns, and names another plugin owns only when the config asked for it.
+     * </p>
+     *
+     * <p>
+     * Best effort by design. {@code getKnownCommands} is Paper-only and this framework compiles against Spigot, so on
+     * anything that does not expose it the label rewrite below still carries execution — the same behaviour as before
+     * this existed, never worse.
+     * </p>
+     */
+    private void claimNames(BridgeCommand bridge, CoreCommand command) {
+        Map<String, Command> known = knownCommands();
+        if (known == null) {
+            // Worth saying once: without this, tab completion on a name the server owns cannot work for anybody who
+            // is not an operator, and the symptom gives no hint why.
+            if (!warnedAboutCommandMap) {
+                warnedAboutCommandMap = true;
+                plugin.getLogger().warning("Cannot read the server's command map, so command names cannot be taken"
+                        + " from the server. Commands still run, but tab completion for a name the server owns will"
+                        + " only work for operators.");
+            }
+            return;
+        }
+        List<String> labels = new java.util.ArrayList<>();
+        labels.add(command.name().toLowerCase(Locale.ROOT));
+        for (String alias : command.aliases()) {
+            labels.add(alias.toLowerCase(Locale.ROOT));
+        }
+        for (String label : labels) {
+            Command holder = known.get(label);
+            if (holder == bridge || !mayAnswer(label)) {
+                // Already ours, or a name another plugin owns and we were not told to take.
+                continue;
+            }
+            if (holder != null) {
+                // unregister() alone leaves the entry behind on some versions, so the label goes too.
+                holder.unregister(commandMap);
+                known.remove(label);
+                plugin.getLogger().info("Took /" + label + " from " + describe(holder) + ".");
+            }
+            known.put(label, bridge);
+            if (!claimed.contains(label)) {
+                claimed.add(label);
+            }
+        }
+    }
+
+    /** What held a name before we took it, for the line that says so. */
+    private static String describe(Command holder) {
+        if (holder instanceof PluginIdentifiableCommand identifiable) {
+            try {
+                Plugin owner = identifiable.getPlugin();
+                if (owner != null && Bukkit.getPluginManager().getPlugin(owner.getName()) == owner) {
+                    return owner.getName();
+                }
+            } catch (RuntimeException internal) {
+                // An internal wrapper that will not answer. It is the server's either way.
+            }
+        }
+        return "the server's built-in command";
+    }
+
+    /** @return the names taken from the server or another plugin, for the startup report */
+    public List<String> claimed() {
+        return List.copyOf(claimed);
     }
 
     /**
@@ -326,7 +484,15 @@ public final class CommandRegistry implements Service {
      */
     private final Set<String> forced = new java.util.HashSet<>();
 
+    /** Labels this registry took over in the command map, in the order it took them. */
+    private final List<String> claimed = new java.util.ArrayList<>();
+
+    /** The bridges this registry created, so the final claim only re-takes names it is entitled to. */
+    private final Set<BridgeCommand> registered = new java.util.HashSet<>();
+
     private boolean captureArmed;
+    private boolean finalClaimArmed;
+    private boolean warnedAboutCommandMap;
 
     /**
      * The command map's backing map, or {@code null} when it cannot be reached.

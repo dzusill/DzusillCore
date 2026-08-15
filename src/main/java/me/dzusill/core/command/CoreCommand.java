@@ -53,8 +53,8 @@ public abstract class CoreCommand extends SubCommand implements CommandExecutor,
         } catch (CommandException ex) {
             // Every command failure can name the command that failed, so "Usage: <player>" can read
             // "Usage: /tp <player>". orElse, not and: a parser that knows the full routed path has already set a
-            // better one.
-            messages.send(sender, ex.messageKey(), ex.placeholder().orElse("cmd", "/" + label));
+            // better one. The context's label, not the raw one — that may carry the internal namespace.
+            messages.send(sender, ex.messageKey(), ex.placeholder().orElse("cmd", "/" + context.label()));
         } catch (Exception | LinkageError ex) {
             // A command must never be able to take the whole server down. LinkageError (e.g.
             // NoClassDefFoundError) covers a missing soft-dependency class reached at runtime;
