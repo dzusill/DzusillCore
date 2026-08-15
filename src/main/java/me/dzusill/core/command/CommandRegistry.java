@@ -102,30 +102,104 @@ public final class CommandRegistry implements Service {
             return;
         }
         finalClaimArmed = true;
+        me.dzusill.core.scheduler.SchedulerService scheduler = plugin.services()
+                .get(me.dzusill.core.scheduler.SchedulerService.class);
         Bukkit.getPluginManager().registerEvents(new Listener() {
 
             @EventHandler(priority = EventPriority.MONITOR)
             public void onServerLoad(org.bukkit.event.server.ServerLoadEvent event) {
-                for (Map.Entry<String, BridgeCommand> entry : captured.entrySet()) {
-                    if (!registered.contains(entry.getValue())) {
-                        continue;
-                    }
-                    reclaim(entry.getKey(), entry.getValue());
-                }
+                reclaimAll();
                 syncCommands();
             }
+
+            /**
+             * Reclaims and resends before this specific player's own tree matters.
+             *
+             * <p>
+             * A one-time claim at startup is not enough against a plugin that takes the name back <em>later</em> - one
+             * that finishes its own setup after ours, or reasserts itself on some later hook of its own. Nothing here
+             * needs to know what that plugin is doing or when: whatever the state of the shared map is, this puts it
+             * right again immediately before the moment it is about to matter to a real player, which is the only
+             * moment that was ever actually reported broken.
+             * </p>
+             *
+             * <p>
+             * Deferred by a tick, the same fix {@code IndexRefreshListener} elsewhere in this ecosystem uses for the
+             * identical reason: the tree Paper sends on login is built before this fires, so resending immediately
+             * would resend the same stale one. Scheduled at the joining player, not globally - on Folia a fresh
+             * connection is not yet guaranteed to belong to the region {@link #sync} runs on, and
+             * {@code player.updateCommands()} needs the thread that owns them.
+             * </p>
+             */
+            @EventHandler(priority = EventPriority.MONITOR)
+            public void onJoin(org.bukkit.event.player.PlayerJoinEvent event) {
+                if (scheduler == null) {
+                    return;
+                }
+                org.bukkit.entity.Player player = event.getPlayer();
+                scheduler.atEntityLater(player, () -> {
+                    if (reclaimAll()) {
+                        syncCommands();
+                    }
+                    player.updateCommands();
+                }, 1L);
+            }
         }, plugin);
+        armSelfHeal(scheduler);
     }
 
-    /** Takes one label back, if we are allowed to hold it and something else has it. */
-    private void reclaim(String label, BridgeCommand bridge) {
-        Map<String, Command> known = knownCommands();
-        if (known == null) {
+    /**
+     * Periodically re-takes any name we are entitled to but no longer hold.
+     *
+     * <p>
+     * The join-time reclaim covers a joining player; this covers everybody already connected when some other plugin
+     * takes a name back. Cheap in the steady state - a handful of map lookups - and it is the only defence that does
+     * not need to know what raced us or when: whatever took the name, this notices and corrects it within one interval
+     * rather than for the rest of the server's life.
+     * </p>
+     */
+    private void armSelfHeal(me.dzusill.core.scheduler.SchedulerService scheduler) {
+        if (scheduler == null) {
             return;
         }
+        scheduler.repeating(() -> {
+            if (reclaimAll()) {
+                syncCommands();
+                for (org.bukkit.entity.Player player : Bukkit.getOnlinePlayers()) {
+                    player.updateCommands();
+                }
+            }
+        }, 100L, 100L);
+    }
+
+    /** @return whether anything actually needed reclaiming */
+    private boolean reclaimAll() {
+        boolean changed = false;
+        for (Map.Entry<String, BridgeCommand> entry : captured.entrySet()) {
+            if (!registered.contains(entry.getValue())) {
+                continue;
+            }
+            changed |= reclaim(entry.getKey(), entry.getValue());
+        }
+        return changed;
+    }
+
+    /**
+     * Takes one label back, if we are allowed to hold it and something else has it.
+     *
+     * @return whether the label was not already ours - i.e. whether this call actually changed anything
+     */
+    private boolean reclaim(String label, BridgeCommand bridge) {
+        Map<String, Command> known = knownCommands();
+        if (known == null) {
+            return false;
+        }
         Command holder = known.get(label);
-        if (holder == bridge || !mayAnswer(label)) {
-            return;
+        if (holder == bridge) {
+            return false;
+        }
+        if (!mayAnswer(label)) {
+            return false;
         }
         if (holder != null) {
             holder.unregister(commandMap);
@@ -135,6 +209,7 @@ public final class CommandRegistry implements Service {
         if (!claimed.contains(label)) {
             claimed.add(label);
         }
+        return true;
     }
 
     /**
@@ -247,7 +322,11 @@ public final class CommandRegistry implements Service {
      * can read at startup.
      * </p>
      *
-     * @return one line per registered label, e.g. {@code /tphere -> SomeTpaPlugin}
+     * @return one line per registered label, e.g. {@code /tphere -> SomeTpaPlugin}. When we own the label, the line
+     *         also names the permission the live {@link Command} object itself requires — not what a config file says
+     *         it should be, but what {@code testPermissionSilent} actually checks. A plugin that inspects the command
+     *         map directly (a whitelist deciding what to suggest, say) uses this value, not ours; the two have no
+     *         reason to differ, but a report that only assumes they match cannot catch it when they do not.
      */
     public List<String> ownershipReport() {
         List<String> lines = new java.util.ArrayList<>();
@@ -256,6 +335,8 @@ public final class CommandRegistry implements Service {
             String who;
             if (owner == entry.getValue() || owner == null) {
                 who = plugin.getName();
+                String permission = entry.getValue().getPermission();
+                who += " (permission: " + (permission == null || permission.isEmpty() ? "none" : permission) + ")";
             } else if (ownedByAnotherPlugin(entry.getKey())) {
                 who = ((PluginIdentifiableCommand) owner).getPlugin().getName()
                         + (forced.contains(entry.getKey()) ? " (taken on use)" : "");
