@@ -163,13 +163,39 @@ public final class CommandRegistry implements Service {
             return;
         }
         scheduler.repeating(() -> {
-            if (reclaimAll()) {
-                syncCommands();
-                for (org.bukkit.entity.Player player : Bukkit.getOnlinePlayers()) {
-                    player.updateCommands();
-                }
+            if (!reclaimAll()) {
+                selfHealRounds = 0;
+                return;
             }
+            if (++selfHealRounds > SELF_HEAL_GIVE_UP_AFTER) {
+                if (selfHealRounds == SELF_HEAL_GIVE_UP_AFTER + 1) {
+                    plugin.getLogger().warning("Command ownership is being taken back as fast as it is claimed;"
+                            + " no longer rebuilding the command tree for it. Commands still run - only tab"
+                            + " completion for the contested names may show another plugin's. Conflicting labels: "
+                            + String.join(", ", conflicts()));
+                }
+                return;
+            }
+            rebuildAndResend(scheduler);
         }, 100L, 100L);
+    }
+
+    /**
+     * Rebuilds the tree and sends it, with the resend a tick behind the rebuild.
+     *
+     * <p>
+     * Both in the same tick is what produced {@code ConcurrentModificationException} on Paper's async command builder:
+     * {@code syncCommands} replaces the Brigadier nodes on the main thread while {@code updateCommands} has that thread
+     * pool walking the previous ones. A tick's gap costs nothing and lets the rebuild finish first.
+     * </p>
+     */
+    private void rebuildAndResend(me.dzusill.core.scheduler.SchedulerService scheduler) {
+        syncCommands();
+        scheduler.later(() -> {
+            for (org.bukkit.entity.Player player : Bukkit.getOnlinePlayers()) {
+                player.updateCommands();
+            }
+        }, 1L);
     }
 
     /** @return whether anything actually needed reclaiming */
@@ -574,6 +600,21 @@ public final class CommandRegistry implements Service {
     private boolean captureArmed;
     private boolean finalClaimArmed;
     private boolean warnedAboutCommandMap;
+
+    /**
+     * How many self-heal rounds in a row have found work, and the point at which the registry stops rebuilding.
+     *
+     * <p>
+     * A round finding work is normal once; finding it every five seconds forever is not. It means whatever holds the
+     * name puts itself back as fast as we take it, and each of our attempts rebuilds the whole Brigadier tree — which
+     * is both futile and the thing that raced Paper's async command builder into
+     * {@code ConcurrentModificationException}. The counter resets the moment a round comes back clean, so a genuine
+     * one-off takeover is still fixed.
+     * </p>
+     */
+    private int selfHealRounds;
+
+    private static final int SELF_HEAL_GIVE_UP_AFTER = 3;
 
     /**
      * The command map's backing map, or {@code null} when it cannot be reached.
