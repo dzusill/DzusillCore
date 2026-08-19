@@ -138,8 +138,13 @@ public final class CommandRegistry implements Service {
                 }
                 org.bukkit.entity.Player player = event.getPlayer();
                 scheduler.atEntityLater(player, () -> {
-                    if (reclaimAll()) {
+                    // Rebuild first, resend a tick later - never both in one tick, and never at all once the
+                    // contest has been given up on. A join used to do exactly that, which is why the tree was
+                    // being replaced under Paper's async builder every time somebody connected.
+                    if (!rebuildingGivenUp && reclaimAll()) {
                         syncCommands();
+                        scheduler.atEntityLater(player, player::updateCommands, 1L);
+                        return;
                     }
                     player.updateCommands();
                 }, 1L);
@@ -168,7 +173,8 @@ public final class CommandRegistry implements Service {
                 return;
             }
             if (++selfHealRounds > SELF_HEAL_GIVE_UP_AFTER) {
-                if (selfHealRounds == SELF_HEAL_GIVE_UP_AFTER + 1) {
+                if (!rebuildingGivenUp) {
+                    rebuildingGivenUp = true;
                     plugin.getLogger().warning("Command ownership is being taken back as fast as it is claimed;"
                             + " no longer rebuilding the command tree for it. Commands still run - only tab"
                             + " completion for the contested names may show another plugin's. Conflicting labels: "
@@ -613,6 +619,18 @@ public final class CommandRegistry implements Service {
      * </p>
      */
     private int selfHealRounds;
+
+    /**
+     * Set once the contest is judged unwinnable, and never cleared.
+     *
+     * <p>
+     * Read by every path that would rebuild the tree, not only the timer that sets it. A player joining used to reclaim
+     * and rebuild on its own, so on a server with a genuinely contested name — {@code /tphere} against a tpa plugin,
+     * say — every single connection replaced the Brigadier tree under Paper's async command builder. That is a rebuild
+     * which was never going to stick, paid for with a stack trace per join.
+     * </p>
+     */
+    private volatile boolean rebuildingGivenUp;
 
     private static final int SELF_HEAL_GIVE_UP_AFTER = 3;
 
