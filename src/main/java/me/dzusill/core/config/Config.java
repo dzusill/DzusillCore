@@ -274,17 +274,59 @@ public class Config extends YamlConfiguration {
         }
     }
 
+    /**
+     * Test seam: runs exactly the merge {@code syncWithConfig} performs, against an in-memory resource and without
+     * writing a file.
+     */
+    boolean mergeForTest(Config source, List<String> ignored) {
+        return mergeFrom(source, source.getConfigurationSection(""), ignored);
+    }
+
     private boolean mergeFrom(Config source, ConfigurationSection section, List<String> ignored) {
+        return mergeFrom(source, section, ignored, false);
+    }
+
+    /**
+     * Copies anything the bundled resource has that the server file does not.
+     *
+     * @param curated
+     *            whether this branch sits inside an ignored section — a list the owner maintains, such as a plugin's
+     *            tools, price overrides or announcements
+     *
+     *            <p>
+     *            Inside a curated branch an <em>entry</em> is never created: that is the whole point of declaring the
+     *            section ignored, so an entry the owner deleted stays deleted rather than reappearing on the next
+     *            start.
+     *            </p>
+     *
+     *            <p>
+     *            Individual <em>keys</em> are still filled in, though, for entries the owner kept. Skipping the branch
+     *            wholesale — which is what this used to do — meant a key added to a shipped entry never reached any
+     *            server that already had a config, so the feature behind it was silently dead and every existing
+     *            install had to be edited by hand.
+     *            </p>
+     */
+    private boolean mergeFrom(Config source, ConfigurationSection section, List<String> ignored, boolean curated) {
         if (section == null)
             return false;
         boolean changed = false;
         for (String key : section.getKeys(false)) {
             String path = section.getCurrentPath().isEmpty() ? key : section.getCurrentPath() + "." + key;
             if (section.isConfigurationSection(key)) {
-                boolean isIgnored = ignored.stream().anyMatch(path::contains);
-                if (!isIgnored || !contains(path)) {
-                    changed = mergeFrom(source, section.getConfigurationSection(key), ignored) || changed;
+                boolean here;
+                if (curated) {
+                    // Already inside a list the owner maintains: an entry they do not have is one they
+                    // deleted, so it is not put back.
+                    if (!contains(path)) {
+                        continue;
+                    }
+                    here = true;
+                } else {
+                    // A curated list is only treated as curated once the owner actually has it. Absent
+                    // entirely means a fresh install, not a deletion, so it is created in full.
+                    here = ignored.contains(path) && contains(path);
                 }
+                changed = mergeFrom(source, section.getConfigurationSection(key), ignored, here) || changed;
             } else if (!contains(path)) {
                 set(path, section.get(key));
                 changed = true;

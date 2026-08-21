@@ -15,6 +15,8 @@ public enum MessageCategory {
 
     /** A preference was switched on or off. Worth one glance; not worth a line of chat history. */
     TOGGLE,
+    /** A transaction completed, such as selling items or receiving a payout. */
+    SALE,
     /** Something was refused. The one kind worth showing twice, because it explains why nothing happened. */
     ERROR,
     /** A teleport happened. */
