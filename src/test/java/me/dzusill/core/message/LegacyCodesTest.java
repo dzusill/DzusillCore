@@ -55,6 +55,39 @@ class LegacyCodesTest {
     }
 
     @Test
+    void aBareHexPrefixBecomesAHexTag() {
+        // How the reference configs colour text, and previously printed as literal "#00F986Ores".
+        assertEquals("<#00f986>Ores", LegacyCodes.toMiniMessage("#00F986Ores"));
+    }
+
+    @Test
+    void anAmpersandHexPrefixBecomesAHexTag() {
+        assertEquals("<#00f986>Ores", LegacyCodes.toMiniMessage("&#00F986Ores"));
+    }
+
+    @Test
+    void theHexInsideAGradientIsNeverRewritten() {
+        // The whole reason this scans rather than pattern-matches: rewriting the two colours inside the tag
+        // would turn one working gradient into three broken tags.
+        String gradient = "<gradient:#1F4277:#1c3b6b>Andromeda</gradient>";
+
+        assertEquals(gradient, LegacyCodes.toMiniMessage(gradient));
+    }
+
+    @Test
+    void aHashThatIsNotAColourIsLeftAlone() {
+        assertEquals("issue #42 and #ggghhh", LegacyCodes.toMiniMessage("issue #42 and #ggghhh"));
+    }
+
+    @Test
+    void convertingTwiceChangesNothingTheSecondTime() {
+        // Callers upstream may already have converted; doing it again must be a no-op.
+        String once = LegacyCodes.toMiniMessage("&c[Admin] #00F986Ores &x&C&2&1&8&0&7Owner");
+
+        assertEquals(once, LegacyCodes.toMiniMessage(once));
+    }
+
+    @Test
     void textWithNoCodesIsUnchanged() {
         assertEquals("plain text", LegacyCodes.toMiniMessage("plain text"));
     }

@@ -183,10 +183,26 @@ public abstract class SubCommand {
             int remaining = context.size() - offset;
             if (remaining <= 1) {
                 String token = offset < context.size() ? context.arg(offset) : "";
-                return TextUtils.partialMatches(token, visibleChildNames(context));
+                List<String> childSuggestions = TextUtils.partialMatches(token, visibleChildNames(context));
+                if (argSpecs.isEmpty()) {
+                    return childSuggestions;
+                }
+                // A node may intentionally support both direct arguments and named children — for example
+                // `/worth <material>` alongside `/worth hand` and `/worth gui`. Previously the children won
+                // outright, making the declared argument's suggestions unreachable.
+                java.util.LinkedHashSet<String> combined = new java.util.LinkedHashSet<>(childSuggestions);
+                combined.addAll(new ArgumentParser(argSpecs).suggest(context, context.args(), offset));
+                return List.copyOf(combined);
             }
             SubCommand child = children.get(context.arg(offset).toLowerCase(Locale.ROOT));
-            return child != null ? child.complete(context, offset + 1) : List.of();
+            if (child != null) {
+                return child.complete(context, offset + 1);
+            }
+            // The first token was a direct argument, not a child name. Keep completing the root node's
+            // remaining arguments rather than treating the unknown child as a dead end.
+            return argSpecs.isEmpty()
+                    ? List.of()
+                    : new ArgumentParser(argSpecs).suggest(context, context.args(), offset);
         }
 
         return new ArgumentParser(argSpecs).suggest(context, context.args(), offset);

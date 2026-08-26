@@ -9,12 +9,12 @@ import org.bukkit.plugin.Plugin;
 import me.dzusill.core.config.Config;
 import me.dzusill.core.service.Reloadable;
 import me.dzusill.core.service.Service;
+import me.dzusill.core.util.ColorUtils;
 
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 /**
  * Resolves and sends user-facing messages defined in {@code messages.yml}, parsed with Adventure's MiniMessage.
@@ -32,15 +32,14 @@ import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
  * when a new Minecraft version ships.</li>
  * <li>{@link BukkitAudiences} (adventure-platform-bukkit) — for plain Spigot, which has no Adventure of its own. This
  * one reflects into CraftBukkit internals and so needs a new release for each Minecraft version.</li>
- * <li>a legacy section-sign string — last resort, and a lossy one: it cannot carry click or hover events at all and
- * downsamples hex to the 16 named colors. Reaching it is logged once, loudly, because the symptom otherwise looks like
- * a plugin bug ("the message shows but clicking does nothing") with nothing in the log to explain it.</li>
+ * <li>Spigot's RGB-capable legacy section-sign string — last resort: it preserves hex colours but cannot carry click or
+ * hover events. Reaching it is logged once, loudly, because the symptom otherwise looks like a plugin bug ("the message
+ * shows but clicking does nothing") with nothing in the log to explain it.</li>
  * </ol>
  */
 public final class MessageService implements Service, Reloadable {
 
     private static final MiniMessage MINI = MiniMessage.miniMessage();
-    private static final LegacyComponentSerializer LEGACY_SECTION = LegacyComponentSerializer.legacySection();
     private static final String PREFIX_KEY = "prefix";
     private static final String PREFIX_TOKEN = "<prefix>";
 
@@ -86,8 +85,8 @@ public final class MessageService implements Service, Reloadable {
                 this.audiences = null;
                 if (!NativeAdventure.available()) {
                     plugin.getLogger().warning("adventure-platform failed to start (" + failure
-                            + ") and this server has no native Adventure — messages will lose click/hover events"
-                            + " and hex colors. Update DzusillCore or run Paper.");
+                            + ") and this server has no native Adventure — messages will lose click/hover events."
+                            + " Update DzusillCore or run Paper.");
                 }
             }
         }
@@ -171,18 +170,20 @@ public final class MessageService implements Service, Reloadable {
      * Sends the message at {@code key} to the recipient, applying placeholders.
      *
      * <p>
-     * A list-valued key always goes to chat whatever its category says. The action bar holds one line and replaces it
-     * on every write, so a five-line list sent there would show only its last line — silently, and only to the person
-     * it was meant to inform.
+     * A list-valued key goes to chat for every visible channel. The action bar holds one line and replaces it on every
+     * write, so a five-line list sent there would show only its last line — silently, and only to the person it was
+     * meant to inform. {@link MessageChannel#NONE} is still honoured, so every key can be disabled.
      * </p>
      */
     public void send(CommandSender recipient, String key, Placeholder placeholder) {
+        Presentation how = presentationOf(key);
         if (config.isList(key)) {
-            getList(key, placeholder).forEach(line -> sendComponent(recipient, line));
-            playSound(recipient, presentationOf(key).sound());
+            if (how.channel() != MessageChannel.NONE) {
+                getList(key, placeholder).forEach(line -> sendComponent(recipient, line));
+            }
+            playSound(recipient, how.sound());
             return;
         }
-        Presentation how = presentationOf(key);
         String raw = config.getString(key, key);
         if (how.channel().chat()) {
             sendComponent(recipient, render(raw, placeholder, true));
@@ -225,7 +226,7 @@ public final class MessageService implements Service, Reloadable {
         if (recipient instanceof org.bukkit.entity.Player player) {
             warnLegacyFallbackOnce();
             player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
-                    net.md_5.bungee.api.chat.TextComponent.fromLegacyText(LEGACY_SECTION.serialize(component)));
+                    net.md_5.bungee.api.chat.TextComponent.fromLegacyText(ColorUtils.legacy(component)));
             return;
         }
         // The console has no hotbar. Saying it in chat beats saying nothing.
@@ -264,9 +265,9 @@ public final class MessageService implements Service, Reloadable {
             audience.sendMessage(component);
             return;
         }
-        // 4. Lossy last resort: legacy strings carry no click or hover events.
+        // 4. Last resort: RGB survives in Spigot's legacy form, but click and hover events do not.
         warnLegacyFallbackOnce();
-        recipient.sendMessage(LEGACY_SECTION.serialize(component));
+        recipient.sendMessage(ColorUtils.legacy(component));
     }
 
     private void warnLegacyFallbackOnce() {
@@ -299,11 +300,17 @@ public final class MessageService implements Service, Reloadable {
      * @param withPrefix
      *            whether {@code <prefix>} expands to the configured prefix or to nothing — the action bar wants the
      *            latter
+     *
+     *            <p>
+     *            Converted after substitution rather than before, so a colour that arrived inside a placeholder value
+     *            is handled too: a LuckPerms prefix comes back from PlaceholderAPI as {@code &c[Admin]} and would
+     *            otherwise reach the player with the {@code &c} printed.
+     *            </p>
      */
     private Component render(String raw, Placeholder placeholder, boolean withPrefix) {
         String expanded = raw == null ? "" : raw.replace(PREFIX_TOKEN, withPrefix ? prefix : "").trim();
         String substituted = placeholder == null ? expanded : placeholder.apply(expanded);
-        return MINI.deserialize(substituted);
+        return MINI.deserialize(LegacyCodes.toMiniMessage(substituted));
     }
 
     @Override

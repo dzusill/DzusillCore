@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -112,55 +114,41 @@ public final class CommandRegistry implements Service {
                 syncCommands();
             }
 
-            /**
-             * Reclaims and resends before this specific player's own tree matters.
-             *
-             * <p>
-             * A one-time claim at startup is not enough against a plugin that takes the name back <em>later</em> - one
-             * that finishes its own setup after ours, or reasserts itself on some later hook of its own. Nothing here
-             * needs to know what that plugin is doing or when: whatever the state of the shared map is, this puts it
-             * right again immediately before the moment it is about to matter to a real player, which is the only
-             * moment that was ever actually reported broken.
-             * </p>
-             *
-             * <p>
-             * Deferred by a tick, the same fix {@code IndexRefreshListener} elsewhere in this ecosystem uses for the
-             * identical reason: the tree Paper sends on login is built before this fires, so resending immediately
-             * would resend the same stale one. Scheduled at the joining player, not globally - on Folia a fresh
-             * connection is not yet guaranteed to belong to the region {@link #sync} runs on, and
-             * {@code player.updateCommands()} needs the thread that owns them.
-             * </p>
-             */
+            /** Resends one settled tree after join, shared by every framework registry on the server. */
             @EventHandler(priority = EventPriority.MONITOR)
             public void onJoin(org.bukkit.event.player.PlayerJoinEvent event) {
                 if (scheduler == null) {
                     return;
                 }
                 org.bukkit.entity.Player player = event.getPlayer();
-                scheduler.atEntityLater(player, () -> {
-                    // Rebuild first, resend a tick later - never both in one tick, and never at all once the
-                    // contest has been given up on. A join used to do exactly that, which is why the tree was
-                    // being replaced under Paper's async builder every time somebody connected.
-                    if (!rebuildingGivenUp && reclaimAll()) {
-                        syncCommands();
-                        scheduler.atEntityLater(player, player::updateCommands, 1L);
-                        return;
+                UUID playerId = player.getUniqueId();
+                if (!PENDING_JOIN_REFRESHES.add(playerId)) {
+                    return;
+                }
+                Runnable clearPending = () -> PENDING_JOIN_REFRESHES.remove(playerId);
+                scheduler.atEntity(player, () -> {
+                    try {
+                        if (player.isOnline()) {
+                            player.updateCommands();
+                        }
+                    } finally {
+                        clearPending.run();
                     }
-                    player.updateCommands();
-                }, 1L);
+                }, clearPending);
             }
         }, plugin);
         armSelfHeal(scheduler);
     }
 
     /**
-     * Periodically re-takes any name we are entitled to but no longer hold.
+     * Periodically re-takes any name we are entitled to but no longer hold, while the server is empty.
      *
      * <p>
-     * The join-time reclaim covers a joining player; this covers everybody already connected when some other plugin
-     * takes a name back. Cheap in the steady state - a handful of map lookups - and it is the only defence that does
-     * not need to know what raced us or when: whatever took the name, this notices and corrects it within one interval
-     * rather than for the rest of the server's life.
+     * Paper 26.2 exposes its live Brigadier dispatcher through the command map. Mutating that map while a player is
+     * online can therefore race the async command builder that is hashing the same nodes, producing a
+     * {@code ConcurrentModificationException}. A late takeover is repaired once the server is empty; while players are
+     * online the stable namespaced registration and the execution/completion bridges remain available without touching
+     * the shared tree.
      * </p>
      */
     private void armSelfHeal(me.dzusill.core.scheduler.SchedulerService scheduler) {
@@ -168,6 +156,10 @@ public final class CommandRegistry implements Service {
             return;
         }
         scheduler.repeating(() -> {
+            if (!Bukkit.getOnlinePlayers().isEmpty()) {
+                selfHealRounds = 0;
+                return;
+            }
             if (!reclaimAll()) {
                 selfHealRounds = 0;
                 return;
@@ -182,26 +174,8 @@ public final class CommandRegistry implements Service {
                 }
                 return;
             }
-            rebuildAndResend(scheduler);
+            syncCommands();
         }, 100L, 100L);
-    }
-
-    /**
-     * Rebuilds the tree and sends it, with the resend a tick behind the rebuild.
-     *
-     * <p>
-     * Both in the same tick is what produced {@code ConcurrentModificationException} on Paper's async command builder:
-     * {@code syncCommands} replaces the Brigadier nodes on the main thread while {@code updateCommands} has that thread
-     * pool walking the previous ones. A tick's gap costs nothing and lets the rebuild finish first.
-     * </p>
-     */
-    private void rebuildAndResend(me.dzusill.core.scheduler.SchedulerService scheduler) {
-        syncCommands();
-        scheduler.later(() -> {
-            for (org.bukkit.entity.Player player : Bukkit.getOnlinePlayers()) {
-                player.updateCommands();
-            }
-        }, 1L);
     }
 
     /** @return whether anything actually needed reclaiming */
@@ -608,6 +582,12 @@ public final class CommandRegistry implements Service {
     private boolean warnedAboutCommandMap;
 
     /**
+     * One join produces one refresh even though every downstream plugin owns a separate registry and listener.
+     * Concurrent because the same class also runs on Folia's entity schedulers.
+     */
+    private static final Set<UUID> PENDING_JOIN_REFRESHES = ConcurrentHashMap.newKeySet();
+
+    /**
      * How many self-heal rounds in a row have found work, and the point at which the registry stops rebuilding.
      *
      * <p>
@@ -624,10 +604,8 @@ public final class CommandRegistry implements Service {
      * Set once the contest is judged unwinnable, and never cleared.
      *
      * <p>
-     * Read by every path that would rebuild the tree, not only the timer that sets it. A player joining used to reclaim
-     * and rebuild on its own, so on a server with a genuinely contested name — {@code /tphere} against a tpa plugin,
-     * say — every single connection replaced the Brigadier tree under Paper's async command builder. That is a rebuild
-     * which was never going to stick, paid for with a stack trace per join.
+     * Once an idle-server contest proves unwinnable, even later idle checks stop rebuilding it. Player joins never
+     * reclaim names: Paper may still be copying the login command tree when {@code PlayerJoinEvent} fires.
      * </p>
      */
     private volatile boolean rebuildingGivenUp;

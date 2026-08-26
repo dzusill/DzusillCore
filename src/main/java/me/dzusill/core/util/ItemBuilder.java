@@ -16,7 +16,6 @@ import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.persistence.PersistentDataType;
 
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 /**
  * Fluent builder for {@link ItemStack}s. Replaces ad-hoc {@code makeItem}/{@code makeHead} helpers with a single
@@ -28,8 +27,6 @@ import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
  * }</pre>
  */
 public final class ItemBuilder {
-
-    private static final LegacyComponentSerializer LEGACY_SECTION = LegacyComponentSerializer.legacySection();
 
     private final ItemStack item;
     private final ItemMeta meta;
@@ -74,12 +71,12 @@ public final class ItemBuilder {
     }
 
     /**
-     * Sets the display name from a component, serialized to a legacy section-sign string.
+     * Sets the display name from a component, serialized to Spigot's RGB-capable section-sign string.
      * {@code ItemMeta#displayName(Component)} is a Paper-only overload; legacy {@code setDisplayName(String)} renders
      * identically on the client and exists on every Bukkit implementation back to 1.8.
      */
     public ItemBuilder name(Component component) {
-        meta.setDisplayName(LEGACY_SECTION.serialize(component));
+        meta.setDisplayName(ColorUtils.legacy(component));
         return this;
     }
 
@@ -94,7 +91,7 @@ public final class ItemBuilder {
         List<Component> parsed = ColorUtils.parse(miniMessageLines);
         List<String> legacy = new ArrayList<>(parsed.size());
         for (Component line : parsed) {
-            legacy.add(LEGACY_SECTION.serialize(line));
+            legacy.add(ColorUtils.legacy(line));
         }
         meta.setLore(legacy);
         return this;

@@ -36,6 +36,14 @@ class ItemBuilderTest {
     }
 
     @Test
+    void preservesHexColoursInLegacyItemMetadata() {
+        ItemStack item = new ItemBuilder(Material.DIAMOND).name("<#00F986>Shiny").lore("<#C21807>Line").build();
+
+        assertTrue(item.getItemMeta().getDisplayName().startsWith("§x§0§0§f§9§8§6"));
+        assertTrue(item.getItemMeta().getLore().get(0).startsWith("§x§c§2§1§8§0§7"));
+    }
+
+    @Test
     void glowAddsEnchantAndHidesIt() {
         ItemStack item = new ItemBuilder(Material.STICK).glow().build();
 

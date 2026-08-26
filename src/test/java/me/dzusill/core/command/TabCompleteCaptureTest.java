@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import me.dzusill.core.CorePlugin;
 import me.dzusill.core.DzusillCorePlugin;
+import me.dzusill.core.command.argument.ArgumentType;
 import me.dzusill.core.command.argument.Arguments;
 import me.dzusill.core.command.meta.CommandMeta;
 
@@ -110,6 +111,14 @@ class TabCompleteCaptureTest {
         assertTrue(complete("probe elz").isEmpty(), "a buffer with no slash is chat, not a command");
     }
 
+    @Test
+    void aNodeWithChildrenStillCompletesItsDirectArgument() {
+        registry.register(new MixedCommand());
+
+        assertEquals(List.of("diamond"), complete("/mixed dia"));
+        assertEquals(List.of("hand"), complete("/mixed ha"));
+    }
+
     /** A command with one online-player argument, which is what the teleports look like. */
     @CommandMeta(name = "probe", aliases = {"prb"}, description = "probe")
     public static final class ProbeCommand extends CoreCommand {
@@ -117,6 +126,34 @@ class TabCompleteCaptureTest {
         public ProbeCommand() {
             super();
             arg("player", new me.dzusill.core.command.argument.types.OnlinePlayerArgument());
+        }
+
+        @Override
+        public void run(CommandContext context, Arguments args) {
+        }
+    }
+
+    @CommandMeta(name = "mixed", description = "mixed")
+    public static final class MixedCommand extends CoreCommand {
+
+        public MixedCommand() {
+            super();
+            optionalArg("item", new ArgumentType<>() {
+                @Override
+                public String parse(CommandContext context, String raw) {
+                    return raw;
+                }
+
+                @Override
+                public List<String> suggest(CommandContext context, String token) {
+                    return List.of("diamond", "dirt");
+                }
+            });
+            child(new SubCommand("hand") {
+                @Override
+                public void run(CommandContext context, Arguments args) {
+                }
+            });
         }
 
         @Override

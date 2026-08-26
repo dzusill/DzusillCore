@@ -1,5 +1,6 @@
 package me.dzusill.core.command;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -112,7 +113,7 @@ class SelfHealTest {
     }
 
     @Test
-    void aJoiningPlayerGetsAFreshTreeEvenIfSomethingTookTheNameBeforeTheyConnected()
+    void anOnlinePlayerPreventsSelfHealFromMutatingTheTreeUnderPapersAsyncBuilder()
             throws ReflectiveOperationException {
         registry.register(fakeTeleport());
         server.getScheduler().performTicks(2);
@@ -122,9 +123,36 @@ class SelfHealTest {
         assertSame(competitor, server.getCommandMap().getCommand("tp"), "the takeover happened");
 
         PlayerMock player = server.addPlayer("Tester");
-        server.getScheduler().performTicks(2); // the join-time reclaim is deferred by one tick.
+        server.getScheduler().performTicks(101);
+
+        assertSame(competitor, server.getCommandMap().getCommand("tp"),
+                "neither join nor the timer may mutate the live tree while Paper can be copying it");
+
+        player.disconnect();
+        server.getScheduler().performTicks(101);
 
         Command held = server.getCommandMap().getCommand("tp");
-        assertTrue(held != competitor, "a joining player's reclaim must run even if the takeover happened earlier");
+        assertTrue(held != competitor, "the idle server may safely repair the late takeover");
+    }
+
+    @Test
+    void allRegistriesCoalesceAJoinIntoOneScheduledRefresh() {
+        me.dzusill.core.message.MessageService messages = plugin.services()
+                .get(me.dzusill.core.message.MessageService.class);
+        CommandRegistry secondRegistry = new CommandRegistry(plugin, messages);
+        secondRegistry.register(new CoreCommand("another") {
+
+            @Override
+            public void run(CommandContext context, Arguments args) {
+                // Only the independently registered join listener matters here.
+            }
+        });
+        int beforeJoin = server.getScheduler().getPendingTasks().size();
+
+        server.addPlayer("Tester");
+
+        assertEquals(beforeJoin + 1, server.getScheduler().getPendingTasks().size(),
+                "two registries must still schedule only one player.updateCommands call");
+        server.getScheduler().performTicks(2); // clears the static coalescing marker for later tests
     }
 }

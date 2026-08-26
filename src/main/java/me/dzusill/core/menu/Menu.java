@@ -21,7 +21,6 @@ import me.dzusill.core.menu.template.MenuTemplate;
 import me.dzusill.core.util.ColorUtils;
 
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 /**
  * Base class for all GUIs. Implements {@link InventoryHolder} so the central {@link MenuListener} can recover the
@@ -36,8 +35,6 @@ import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
  * </p>
  */
 public abstract class Menu implements InventoryHolder {
-
-    private static final LegacyComponentSerializer LEGACY_SECTION = LegacyComponentSerializer.legacySection();
 
     protected final CorePlugin plugin;
     protected final PlayerMenuContext context;
@@ -116,8 +113,9 @@ public abstract class Menu implements InventoryHolder {
     private void openInternal(boolean recordHistory) {
         try {
             // Bukkit.createInventory(InventoryHolder, int, Component) is a Paper-only overload;
-            // serialize to a legacy section-sign string so this works on plain Spigot/CraftBukkit too.
-            this.inventory = Bukkit.createInventory(this, size(), LEGACY_SECTION.serialize(title()));
+            // Serialize to Spigot's RGB-capable section-sign form so this works on plain Spigot/CraftBukkit
+            // without flattening a configured hex colour to the nearest of the old sixteen colours.
+            this.inventory = Bukkit.createInventory(this, size(), ColorUtils.legacy(title()));
             this.items.clear();
             this.buttons.clear();
             this.inputSlots.clear();
@@ -174,10 +172,33 @@ public abstract class Menu implements InventoryHolder {
     // --- content placement (also used by templates) -------------------------
 
     public void set(int slot, MenuItem item) {
+        if (!inBounds(slot)) {
+            return;
+        }
         items.put(slot, item);
         if (inventory != null) {
             inventory.setItem(slot, item.itemStack());
         }
+    }
+
+    /**
+     * A {@code Slot:} value in {@code menus.yml} copied from a layout with more rows than this one has (or simply
+     * mistyped) used to reach Bukkit's inventory array raw and throw {@link ArrayIndexOutOfBoundsException}, which
+     * {@link #openInternal} catches - but only after aborting the rest of {@link #decorate()}, so one bad slot blanked
+     * the whole menu instead of just the one button. Skipping it here, with a warning identifying the class and the
+     * slot, keeps everything else on the page working.
+     */
+    private boolean inBounds(int slot) {
+        int size = size();
+        if (slot < 0 || slot >= size) {
+            plugin.getLogger().log(Level.WARNING,
+                    "{0}: slot {1} is outside this menu''s {2} slots (menus.yml has a Slot: value left over from a"
+                            + " layout with more rows, or a plain typo) - that button is skipped, the rest of the menu"
+                            + " still renders.",
+                    new Object[]{getClass().getName(), slot, size});
+            return false;
+        }
+        return true;
     }
 
     public void setItem(int slot, ItemStack itemStack) {
@@ -200,6 +221,9 @@ public abstract class Menu implements InventoryHolder {
     }
 
     void placeButton(int slot, MenuButton button) {
+        if (!inBounds(slot)) {
+            return;
+        }
         buttons.put(slot, button);
         if (inventory != null && button.visibleTo(context.player())) {
             inventory.setItem(slot, button.icon());
