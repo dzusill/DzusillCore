@@ -53,7 +53,7 @@ public final class LicenseModule extends AbstractModule {
      * and pointing it somewhere else achieves nothing: responses are verified against the key above.
      * </p>
      */
-    private static final String DEFAULT_VERIFY_URL = "https://license.dzusill.com/verify";
+    private static final String DEFAULT_VERIFY_URL = "https://licence.krampl.dev/verify";
 
     /** ~6 hours. Frequent enough that a revocation bites the same day, rare enough to be invisible. */
     private static final long RECHECK_TICKS = 20L * 60 * 60 * 6;
