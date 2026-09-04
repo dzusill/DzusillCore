@@ -2,6 +2,7 @@ package me.dzusill.core.config;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.*;
 
 import org.bukkit.Bukkit;
@@ -52,6 +53,9 @@ public class Config extends YamlConfiguration {
             }
         }
         Config cfg = loadConfiguration(f);
+        if (cfg.failed) {
+            cfg = repair(plugin, f, cfg);
+        }
         cfg.resourcePath = resourcePath;
         cfg.serverPath = serverPath;
         cfg.ignoredSections = ignoredSections;
@@ -59,6 +63,48 @@ public class Config extends YamlConfiguration {
         cfg.plugin = plugin;
         cfg.syncWithConfig(f, plugin.getResource(resourcePath), ignoredSections);
         return cfg;
+    }
+
+    /**
+     * Last resort for a file that did not parse: put right the two faults that have one correct answer, and only if the
+     * result actually loads.
+     *
+     * <p>
+     * Worth doing rather than merely reporting, because the alternative is silent: a config that fails to parse hands
+     * back defaults for every key, so the server runs on settings nobody chose. One of the two faults was also written
+     * by this class's own merge (see {@link YamlRepair}), which makes leaving it for the owner to find by hand
+     * indefensible. A repair that does not produce a loadable file is thrown away untouched — the file on disk is only
+     * ever overwritten by something already proven to parse.
+     * </p>
+     */
+    private static Config repair(Plugin plugin, File file, Config broken) {
+        String text;
+        try {
+            text = Files.readString(file.toPath(), StandardCharsets.UTF_8);
+        } catch (IOException unreadable) {
+            return broken;
+        }
+        YamlRepair.Result repaired = YamlRepair.repair(text);
+        if (!repaired.changed()) {
+            return broken;
+        }
+        Config candidate = new Config();
+        try {
+            candidate.loadFromString(repaired.text(), file.getName());
+        } catch (InvalidConfigurationException stillBroken) {
+            return broken;
+        }
+        try {
+            Files.writeString(file.toPath(), repaired.text(), StandardCharsets.UTF_8);
+        } catch (IOException unwritable) {
+            // The in-memory repair still stands for this run; it just will not survive a restart.
+            plugin.getLogger().warning("Repaired " + file.getName() + " in memory but could not write it back: "
+                    + unwritable.getMessage());
+        }
+        plugin.getLogger().warning(file.getName() + " did not parse and has been repaired — it was loading NOTHING "
+                + "and every value fell back to its default until now.");
+        repaired.fixes().forEach(fix -> plugin.getLogger().warning("  " + file.getName() + ": " + fix.description()));
+        return candidate;
     }
 
     // -------------------------------------------------------------------------
@@ -87,12 +133,41 @@ public class Config extends YamlConfiguration {
         return file == null ? "unknown" : file.getName();
     }
 
+    /**
+     * Adds the keys a newer version of the plugin introduced to the owner's file.
+     *
+     * <p>
+     * The file is edited, not rewritten. Anything the YAML model cannot hold survives untouched: comments between list
+     * items, sections whose only content is a commented-out example, the owner's quoting and indentation, keys the
+     * plugin stopped using, and the position of everything they already had. See {@link TextMerge}.
+     * </p>
+     *
+     * <p>
+     * Nothing is written when nothing is missing, so a server that is already current never has its config's
+     * modification time touched.
+     * </p>
+     */
     public void syncWithConfig(File file, InputStream resource, String... ignoredSections) {
         if (failed || resource == null)
             return;
-        Config defaults = loadConfiguration(resource, file.getName());
-        if (mergeFrom(defaults, defaults.getConfigurationSection(""), Arrays.asList(ignoredSections))) {
-            save(file);
+        try {
+            String resourceText = read(resource);
+            String serverText = file.exists() ? Files.readString(file.toPath(), StandardCharsets.UTF_8) : "";
+            String merged = TextMerge.merge(serverText, resourceText, Arrays.asList(ignoredSections));
+            if (merged == null) {
+                return;
+            }
+            Files.writeString(file.toPath(), merged, StandardCharsets.UTF_8);
+            // The in-memory view was loaded before the splice, so it would not see anything just added.
+            loadFromString(merged, file.getName());
+        } catch (IOException | InvalidConfigurationException ex) {
+            Bukkit.getLogger().warning("Could not merge new keys into " + file.getName() + ": " + ex.getMessage());
+        }
+    }
+
+    private static String read(InputStream stream) throws IOException {
+        try (stream) {
+            return new String(stream.readAllBytes(), StandardCharsets.UTF_8);
         }
     }
 
@@ -274,72 +349,6 @@ public class Config extends YamlConfiguration {
         }
     }
 
-    /**
-     * Test seam: runs exactly the merge {@code syncWithConfig} performs, against an in-memory resource and without
-     * writing a file.
-     */
-    boolean mergeForTest(Config source, List<String> ignored) {
-        return mergeFrom(source, source.getConfigurationSection(""), ignored);
-    }
-
-    private boolean mergeFrom(Config source, ConfigurationSection section, List<String> ignored) {
-        return mergeFrom(source, section, ignored, false);
-    }
-
-    /**
-     * Copies anything the bundled resource has that the server file does not.
-     *
-     * @param curated
-     *            whether this branch sits inside an ignored section — a list the owner maintains, such as a plugin's
-     *            tools, price overrides or announcements
-     *
-     *            <p>
-     *            Inside a curated branch an <em>entry</em> is never created: that is the whole point of declaring the
-     *            section ignored, so an entry the owner deleted stays deleted rather than reappearing on the next
-     *            start.
-     *            </p>
-     *
-     *            <p>
-     *            Individual <em>keys</em> are still filled in, though, for entries the owner kept. Skipping the branch
-     *            wholesale — which is what this used to do — meant a key added to a shipped entry never reached any
-     *            server that already had a config, so the feature behind it was silently dead and every existing
-     *            install had to be edited by hand.
-     *            </p>
-     */
-    private boolean mergeFrom(Config source, ConfigurationSection section, List<String> ignored, boolean curated) {
-        if (section == null)
-            return false;
-        boolean changed = false;
-        for (String key : section.getKeys(false)) {
-            String path = section.getCurrentPath().isEmpty() ? key : section.getCurrentPath() + "." + key;
-            if (section.isConfigurationSection(key)) {
-                boolean here;
-                if (curated) {
-                    // Already inside a list the owner maintains: an entry they do not have is one they
-                    // deleted, so it is not put back.
-                    if (!contains(path)) {
-                        continue;
-                    }
-                    here = true;
-                } else {
-                    // A curated list is only treated as curated once the owner actually has it. Absent
-                    // entirely means a fresh install, not a deletion, so it is created in full.
-                    here = ignored.contains(path) && contains(path);
-                }
-                changed = mergeFrom(source, section.getConfigurationSection(key), ignored, here) || changed;
-            } else if (!contains(path)) {
-                set(path, section.get(key));
-                changed = true;
-            }
-            String srcComment = source.getComment(path);
-            if (srcComment != null && !srcComment.equals(getComment(path))) {
-                setComment(path, srcComment);
-                changed = true;
-            }
-        }
-        return changed;
-    }
-
     private static String buildPath(Deque<String> keyStack) {
         String[] keys = keyStack.toArray(new String[0]);
         StringBuilder sb = new StringBuilder();
@@ -357,4 +366,5 @@ public class Config extends YamlConfiguration {
             count++;
         return count;
     }
+
 }

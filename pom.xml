@@ -6,7 +6,7 @@
 
     <groupId>me.dzusill</groupId>
     <artifactId>DzusillCore</artifactId>
-    <version>1.14.0</version>
+    <version>1.14.1</version>
     <packaging>jar</packaging>
 
     <name>DzusillCore</name>
@@ -34,13 +34,43 @@
     <profiles>
         <!-- mvn package -Poberon → target/OberonCore-<version>.jar
              Same code, the client's server name on it. Plugins that run against this build
-             need `depend: [OberonCore]`; no recompile, the API is unchanged. -->
+             need `depend: [OberonCore]`; no recompile, the API is unchanged.
+
+             mvn install -Poberon additionally publishes the same jar under the coordinate
+             me.dzusill:OberonCore:<version>, so an Oberon plugin can depend on the name it
+             actually runs against instead of on DzusillCore. The bytes are identical — only
+             plugin.yml differs — so the two coordinates are interchangeable at compile time;
+             matching them just stops the pom from contradicting plugin.yml. -->
         <profile>
             <id>oberon</id>
             <properties>
                 <plugin.name>OberonCore</plugin.name>
                 <plugin.description>Core framework for the Oberon network</plugin.description>
             </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-install-plugin</artifactId>
+                        <version>3.1.2</version>
+                        <executions>
+                            <execution>
+                                <id>install-as-oberoncore</id>
+                                <phase>install</phase>
+                                <goals><goal>install-file</goal></goals>
+                                <configuration>
+                                    <file>${project.build.directory}/${plugin.name}-${project.version}.jar</file>
+                                    <groupId>${project.groupId}</groupId>
+                                    <artifactId>OberonCore</artifactId>
+                                    <version>${project.version}</version>
+                                    <packaging>jar</packaging>
+                                    <generatePom>true</generatePom>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
     </profiles>
 

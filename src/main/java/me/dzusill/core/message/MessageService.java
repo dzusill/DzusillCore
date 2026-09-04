@@ -72,6 +72,11 @@ public final class MessageService implements Service, Reloadable {
     public MessageService(Plugin plugin) {
         this.plugin = plugin;
         load();
+        // The framework's own refusals are filed under ERROR before a plugin says anything, so a server owner gets a
+        // sound on "you do not have permission" by writing four lines of config — not by waiting for every plugin to
+        // categorise the same ten keys again.
+        categorise(Messages.categories());
+        adoptConfiguredPresentation();
         // adventure-platform doesn't route through MockBukkit's message log (breaking message-capture
         // tests), so skip it under the mock server and let sendComponent use the legacy path there.
         boolean mockServer = plugin.getServer().getClass().getSimpleName().toLowerCase(java.util.Locale.ROOT)
@@ -95,6 +100,34 @@ public final class MessageService implements Service, Reloadable {
     private void load() {
         this.config = Config.loadConfig(plugin, "messages.yml", "messages.yml");
         this.prefix = config.getString(PREFIX_KEY, "");
+    }
+
+    /**
+     * Picks up the {@code Presentation} block from the plugin's own {@code config.yml}, if it has one.
+     *
+     * <p>
+     * Every plugin that wanted channels and sounds used to wire this by hand, which meant the ones that had not got
+     * round to it offered no way to configure their messages at all — the same four lines of config worked in one
+     * plugin and did nothing in the next. Reading it here makes the block mean the same thing everywhere, and a plugin
+     * that still wires it itself simply overwrites this with the identical value.
+     * </p>
+     *
+     * <p>
+     * Deliberately reads the file only when it already exists, and never through {@link Config#loadConfig}: that would
+     * create an empty {@code config.yml} in the data folder of every plugin that ships none.
+     * </p>
+     */
+    private void adoptConfiguredPresentation() {
+        java.io.File file = new java.io.File(plugin.getDataFolder(), "config.yml");
+        if (!file.exists()) {
+            return;
+        }
+        PresentationSettings configured = PresentationSettings
+                .from(Config.loadConfiguration(file).getConfigurationSection("Presentation"));
+        if (!configured.isEmpty()) {
+            // An empty block must not silence a plugin that set its own presentation before reloading.
+            presentation(configured);
+        }
     }
 
     /**
@@ -316,5 +349,8 @@ public final class MessageService implements Service, Reloadable {
     @Override
     public void reload() {
         load();
+        // Channels and sounds are edited far more often than the messages themselves; a reload that re-read the text
+        // but kept the old presentation would look broken.
+        adoptConfiguredPresentation();
     }
 }

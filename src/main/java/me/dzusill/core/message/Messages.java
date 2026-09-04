@@ -22,4 +22,28 @@ public final class Messages {
 
     private Messages() {
     }
+
+    /**
+     * What kind of message each built-in key is.
+     *
+     * <p>
+     * Applied by {@link MessageService} the moment it is constructed, so writing {@code Presentation.Categories.ERROR}
+     * into a config governs the framework's own refusals — "you do not have permission", a usage line, an unknown
+     * subcommand — without every plugin having to categorise them again. A plugin that files the same key elsewhere
+     * still wins: it categorises after construction.
+     * </p>
+     *
+     * @return every framework key mapped to its category, for {@link MessageService#categorise(java.util.Map)}
+     */
+    public static java.util.Map<String, MessageCategory> categories() {
+        java.util.Map<String, MessageCategory> categories = new java.util.LinkedHashMap<>();
+        // Every one of these is a refusal or a failure: the command did not do what was asked. That is the kind
+        // worth being able to make audible, which is what ERROR is for.
+        for (String key : new String[]{NO_PERMISSION, PLAYERS_ONLY, CONSOLE_ONLY, UNKNOWN_COMMAND, INVALID_USAGE,
+                INVALID_NUMBER, PLAYER_NOT_FOUND, PLAYER_AMBIGUOUS, RELOAD_FAILED, COMMAND_ERROR}) {
+            categories.put(key, MessageCategory.ERROR);
+        }
+        categories.put(RELOAD_SUCCESS, MessageCategory.INFO);
+        return categories;
+    }
 }
