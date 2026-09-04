@@ -99,6 +99,88 @@ final class YamlRepair {
     }
 
     /**
+     * Works out what indent a tab was standing in for, from the file rather than from a tab width.
+     *
+     * <p>
+     * Expanding a tab to a fixed number of columns is the obvious move and the wrong one: it produces a file that
+     * parses and means something else. A tab expanded to two columns in front of a key whose siblings sit at four does
+     * not fail — it quietly reparents the key, and the owner loses that whole block with nothing in the log.
+     * </p>
+     *
+     * <p>
+     * The line above says what was meant, in three cases that cover what people actually paste:
+     * </p>
+     * <ul>
+     * <li><b>Both are list items.</b> The new one belongs where the one above it is.</li>
+     * <li><b>The line above opens a block</b> — a key with no value. Nothing else can follow it but its first child,
+     * and the tab says the author was indenting, so: one step in.</li>
+     * <li><b>The line above holds a value.</b> A key with a scalar cannot own children at all, so the only reading YAML
+     * permits is a sibling — the same indent.</li>
+     * </ul>
+     *
+     * <p>
+     * A wrong answer here is still caught: {@link Config#repair} re-parses and throws the whole repair away if it does
+     * not load, leaving the file as it was and reported. The fix is also logged with its line numbers so the owner can
+     * check the one judgement this class makes.
+     * </p>
+     */
+    private static int intendedIndent(List<String> lines, int index, int step) {
+        String body = lines.get(index).stripLeading();
+        for (int i = index - 1; i >= 0; i--) {
+            String above = lines.get(i);
+            String aboveBody = above.stripLeading();
+            if (aboveBody.isEmpty() || aboveBody.startsWith("#")) {
+                continue;
+            }
+            int aboveIndent = above.length() - aboveBody.length();
+            if (body.startsWith("- ") && aboveBody.startsWith("- ")) {
+                return aboveIndent;
+            }
+            return opensBlock(aboveBody) ? aboveIndent + step : aboveIndent;
+        }
+        return 0;
+    }
+
+    /** @return true when the line is a key with nothing after the colon, so the next line can only be its child */
+    private static boolean opensBlock(String body) {
+        if (body.startsWith("- ") || !body.contains(":")) {
+            return false;
+        }
+        String afterColon = body.substring(body.indexOf(':') + 1).trim();
+        return afterColon.isEmpty() || afterColon.startsWith("#");
+    }
+
+    /**
+     * @return the number of columns this file indents by, taken from the gap it uses most often between a line and the
+     *         one it nests under. Falls back to two, which is what every file this framework ships uses.
+     */
+    private static int majorityIndentStep(List<String> lines) {
+        java.util.Map<Integer, Integer> counts = new java.util.HashMap<>();
+        int previous = 0;
+        for (String line : lines) {
+            String body = line.stripLeading();
+            if (body.isEmpty() || body.startsWith("#") || line.indexOf('\t') >= 0) {
+                continue;
+            }
+            int indent = line.length() - body.length();
+            if (indent > previous) {
+                counts.merge(indent - previous, 1, Integer::sum);
+            }
+            previous = indent;
+        }
+        return counts.entrySet().stream().max(java.util.Map.Entry.comparingByValue()).map(java.util.Map.Entry::getKey)
+                .orElse(2);
+    }
+
+    private static String join(List<Integer> numbers) {
+        StringBuilder sb = new StringBuilder();
+        for (int n : numbers) {
+            sb.append(sb.isEmpty() ? "" : ", ").append(n);
+        }
+        return sb.toString();
+    }
+
+    /**
      * @return how far this file's list items normally sit in from the key that owns them. Bukkit's dumper writes them
      *         at the key's own indent, a hand-written or bundled file two further in; either is fine, but one file only
      *         ever does one of them, and that is what makes the odd item out identifiable at all

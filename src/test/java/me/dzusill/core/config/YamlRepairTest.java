@@ -66,6 +66,87 @@ class YamlRepairTest {
         new YamlConfiguration().loadFromString(result.text());
     }
 
+    /**
+     * The shape that reached a client's server: a tier customised by hand, with the added block indented by a tab
+     * because it was pasted. One tab voided the file, so the plugin loaded no tiers at all and spawned nothing.
+     */
+    private static final String TAB_INDENTED = """
+            tiers:
+              stellar:
+                weight: 60
+                unlock-seconds: -1
+            \tcommands:
+                  - "eco give {player} 1000000"
+            \t  - "stardust give {player} 1000"
+                loot:
+                  guaranteed:
+                    - material: IRON_INGOT
+            """;
+
+    @Test
+    @DisplayName("the tab fixture really is what the server rejected")
+    void tabFixtureIsTheRealFailure() {
+        InvalidConfigurationException failure = assertThrows(InvalidConfigurationException.class,
+                () -> new YamlConfiguration().loadFromString(TAB_INDENTED));
+        assertTrue(failure.getMessage().contains("\\t"), failure.getMessage());
+    }
+
+    @Test
+    @DisplayName("tab indentation becomes the indent the line above says it meant")
+    void tabIndentedLinesAreRealigned() throws Exception {
+        YamlRepair.Result result = YamlRepair.repair(TAB_INDENTED);
+
+        assertTrue(result.changed());
+        assertFalse(result.text().contains("\t"));
+        YamlConfiguration loaded = new YamlConfiguration();
+        loaded.loadFromString(result.text());
+
+        assertEquals(List.of("eco give {player} 1000000", "stardust give {player} 1000"),
+                loaded.getStringList("tiers.stellar.commands"),
+                "the pasted block lands on the tier that owns it, both entries intact");
+        assertEquals(60, loaded.getInt("tiers.stellar.weight"), "and the rest of the tier is untouched");
+        assertNotNull(loaded.getConfigurationSection("tiers.stellar.loot"));
+    }
+
+    @Test
+    @DisplayName("a key after one that already holds a value can only be its sibling")
+    void tabAfterAScalarBecomesASibling() throws Exception {
+        YamlRepair.Result result = YamlRepair.repair("a:\n  b: 1\n\tc: 2\n");
+
+        YamlConfiguration loaded = new YamlConfiguration();
+        loaded.loadFromString(result.text());
+        assertEquals(1, loaded.getInt("a.b"));
+        assertEquals(2, loaded.getInt("a.c"), "c is b's sibling — a scalar cannot own children");
+    }
+
+    @Test
+    @DisplayName("a key after one that opens a block becomes its child")
+    void tabAfterABlockOpenerBecomesAChild() throws Exception {
+        YamlRepair.Result result = YamlRepair.repair("a:\n  b:\n\tc: 2\n");
+
+        YamlConfiguration loaded = new YamlConfiguration();
+        loaded.loadFromString(result.text());
+        assertEquals(2, loaded.getInt("a.b.c"), "b has no value, so the indented line is what fills it");
+    }
+
+    @Test
+    @DisplayName("the file's own indent step is used, not a tab width")
+    void indentStepComesFromTheFile() throws Exception {
+        // Four-space file: expanding the tab to two columns would parse and quietly reparent the key.
+        YamlRepair.Result result = YamlRepair.repair("root:\n    a:\n\t    b: 1\n");
+
+        YamlConfiguration loaded = new YamlConfiguration();
+        loaded.loadFromString(result.text());
+        assertEquals(1, loaded.getInt("root.a.b"), "b belongs to a, at this file's four-column step");
+    }
+
+    @Test
+    @DisplayName("a tab inside a value is not indentation and is left alone")
+    void tabsInsideValuesSurvive() {
+        String inValue = "message: \"a\tb\"\n";
+        assertFalse(YamlRepair.repair(inValue).changed(), "only leading whitespace is indentation");
+    }
+
     @Test
     @DisplayName("a list that legitimately repeats a value is left alone")
     void deliberateDuplicatesSurvive() {
