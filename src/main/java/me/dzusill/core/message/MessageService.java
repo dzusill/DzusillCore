@@ -154,6 +154,19 @@ public final class MessageService implements Service, Reloadable {
     }
 
     /**
+     * The configured raw lines for a list-valued {@code key}, unrendered and with {@code <prefix>} left alone. The list
+     * counterpart of {@link #raw(String)}, for the same reason: some consumers need the MiniMessage source rather than
+     * a {@link Component}, because whatever renders it is not this plugin — an external hologram or scoreboard plugin,
+     * say, which parses the markup itself.
+     *
+     * @return the configured lines, or an empty list when the key is absent (unlike {@link #raw(String)}, a missing
+     *         list has no sensible key-shaped fallback)
+     */
+    public List<String> rawList(String key) {
+        return config.getStringList(key);
+    }
+
+    /**
      * Builds components for a list-valued message key (e.g. multi-line usage text).
      */
     public List<Component> getList(String key, Placeholder placeholder) {
