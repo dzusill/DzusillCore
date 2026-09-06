@@ -11,31 +11,42 @@ public final class TimeUtils {
     private TimeUtils() {
     }
 
+    private static final String[] SUFFIXES = {"d", "h", "m", "s"};
+
     /**
-     * Formats a millisecond duration as a compact {@code Xd Yh Zm Ws} string, omitting zero units. Durations under one
-     * second render as {@code 0s}.
+     * Formats a millisecond duration as a compact {@code Xd Yh Zm Ws} string. Durations under one second render as
+     * {@code 0s}.
+     *
+     * <p>
+     * Zero units are trimmed from the <em>ends</em> only — a zero between two non-zero units is kept, because a
+     * countdown that jumps from {@code 5h 1m 42s} to {@code 5h 42s} appears to lose a column and reads as a glitch. So
+     * {@code 5h 0m 42s} keeps its minutes while {@code 52m 42s} never grows an {@code 0h} in front, and an exact hour
+     * stays {@code 1h} rather than {@code 1h 0m 0s}.
+     * </p>
      */
     public static String format(long millis) {
         if (millis < 1000) {
             return "0s";
         }
         Duration duration = Duration.ofMillis(millis);
-        long days = duration.toDays();
-        long hours = duration.toHoursPart();
-        long minutes = duration.toMinutesPart();
-        long seconds = duration.toSecondsPart();
+        long[] units = {duration.toDays(), duration.toHoursPart(), duration.toMinutesPart(), duration.toSecondsPart()};
+
+        int first = 0;
+        while (first < units.length && units[first] == 0) {
+            first++;
+        }
+        int last = units.length - 1;
+        while (last > first && units[last] == 0) {
+            last--;
+        }
 
         StringBuilder builder = new StringBuilder();
-        appendUnit(builder, days, "d");
-        appendUnit(builder, hours, "h");
-        appendUnit(builder, minutes, "m");
-        appendUnit(builder, seconds, "s");
-        return builder.toString().trim();
-    }
-
-    private static void appendUnit(StringBuilder builder, long value, String suffix) {
-        if (value > 0) {
-            builder.append(value).append(suffix).append(' ');
+        for (int i = first; i <= last; i++) {
+            if (!builder.isEmpty()) {
+                builder.append(' ');
+            }
+            builder.append(units[i]).append(SUFFIXES[i]);
         }
+        return builder.toString();
     }
 }
