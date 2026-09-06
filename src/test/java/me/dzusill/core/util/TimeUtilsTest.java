@@ -16,24 +16,23 @@ class TimeUtilsTest {
     }
 
     @Test
-    @DisplayName("a zero between two units is kept")
-    void interiorZerosSurvive() {
-        // Without this a countdown drops from "5h 1m 42s" to "5h 42s" and looks like it lost a column.
-        assertEquals("5h 0m 42s", of(0, 5, 0, 42));
-        assertEquals("1d 0h 0m 5s", of(1, 0, 0, 5));
-        // Interior and trailing zeros in one value: the 0h stays because seconds follow it, the 0s goes
-        // because nothing does.
-        assertEquals("2d 0h 30m", of(2, 0, 30, 0));
+    @DisplayName("a leading zero unit is dropped")
+    void nothingIsPrintedAboveTheLargestNonZeroUnit() {
+        assertEquals("52m 42s", of(0, 0, 52, 42), "no 0h in front");
+        assertEquals("30s", of(0, 0, 0, 30), "no 0h 0m in front");
+        assertEquals("2h 0m 0s", of(0, 2, 0, 0), "no 0d in front");
     }
 
     @Test
-    @DisplayName("a zero at either end is trimmed")
-    void leadingAndTrailingZerosAreDropped() {
-        assertEquals("52m 42s", of(0, 0, 52, 42), "no 0h in front");
-        assertEquals("1h", of(0, 1, 0, 0), "not 1h 0m 0s");
-        assertEquals("1d", of(1, 0, 0, 0));
-        assertEquals("30s", of(0, 0, 0, 30));
-        assertEquals("1h 5m", of(0, 1, 5, 0));
+    @DisplayName("every unit below the largest one is printed, zero or not")
+    void smallerUnitsAlwaysFollow() {
+        // The width then only changes when the duration crosses a unit boundary, not on an ordinary
+        // tick: dropping from "5h 1m 42s" to "5h 42s" looked like a lost column.
+        assertEquals("5h 0m 42s", of(0, 5, 0, 42));
+        assertEquals("1h 0m 0s", of(0, 1, 0, 0), "an exact hour still shows its minutes and seconds");
+        assertEquals("1d 0h 0m 5s", of(1, 0, 0, 5));
+        assertEquals("2d 0h 30m 0s", of(2, 0, 30, 0));
+        assertEquals("1m 0s", of(0, 0, 1, 0));
     }
 
     @Test
@@ -55,6 +54,6 @@ class TimeUtilsTest {
     @Test
     @DisplayName("days do not roll into a larger unit")
     void longDurationsStayInDays() {
-        assertEquals("400d", of(400, 0, 0, 0));
+        assertEquals("400d 0h 0m 0s", of(400, 0, 0, 0));
     }
 }

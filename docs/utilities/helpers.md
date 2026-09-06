@@ -101,6 +101,20 @@ TimeUtils.format(3661000)   // "1h 1m 1s"
 TimeUtils.format(90061000)  // "1d 1h 1m 1s"
 ```
 
+**Leading zero units are dropped; smaller ones are not.** Once the largest non-zero unit is found,
+every unit below it is printed down to seconds even when it is zero:
+
+```java
+TimeUtils.format(3162000)   // "52m 42s"      — no 0h in front
+TimeUtils.format(30000)     // "30s"          — no 0h 0m in front
+TimeUtils.format(18042000)  // "5h 0m 42s"    — the zero minutes stay
+TimeUtils.format(3600000)   // "1h 0m 0s"     — an exact hour keeps both
+```
+
+That keeps the width stable across a tick: a countdown that dropped from `5h 1m 42s` to `5h 42s`
+would look like it had lost a column. Every plugin on the framework formats through this, so their
+timers all read alike — changing it here changes all of them.
+
 Usage with `CooldownManager`:
 
 ```java
