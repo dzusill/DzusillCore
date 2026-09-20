@@ -144,6 +144,25 @@ public final class MessageService implements Service, Reloadable {
     }
 
     /**
+     * Builds a component for the action bar: the same text as {@link #get}, but with {@code <prefix>} expanding to
+     * nothing.
+     *
+     * <p>
+     * {@link #send} already does this for the keys it routes there, on the grounds that the action bar is one short row
+     * and a prefix repeated on every one of them costs room the message itself needs. Callers that build the component
+     * themselves — anything writing its own action bar rather than going through {@code send} — had no way to ask for
+     * the same treatment and silently got the prefix back. This is that way.
+     * </p>
+     */
+    public Component getActionBar(String key, Placeholder placeholder) {
+        return render(config.getString(key, key), placeholder, false);
+    }
+
+    public Component getActionBar(String key) {
+        return getActionBar(key, Placeholder.empty());
+    }
+
+    /**
      * The configured raw string for {@code key} (not rendered, {@code <prefix>} not expanded), or the key itself when
      * absent. Use this when message text is needed as a plain {@link String} — typically a value substituted into
      * another message's {@code %placeholder%} — rather than a rendered {@link Component}. Keep such values tag-free,
