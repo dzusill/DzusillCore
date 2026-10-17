@@ -6,7 +6,7 @@
 
     <groupId>me.dzusill</groupId>
     <artifactId>DzusillCore</artifactId>
-    <version>1.14.4</version>
+    <version>1.14.5</version>
     <packaging>jar</packaging>
 
     <name>DzusillCore</name>

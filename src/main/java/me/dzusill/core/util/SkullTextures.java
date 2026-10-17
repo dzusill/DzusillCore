@@ -7,6 +7,8 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.bukkit.Bukkit;
 import org.bukkit.inventory.meta.SkullMeta;
@@ -15,12 +17,22 @@ import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
 
 /**
- * Applies a base64 textures value to a SkullMeta across Spigot/Paper 1.16.5–1.21.x.
+ * Applies a base64 textures value to a SkullMeta across Spigot/Paper 1.16.5–26.x.
  *
- * Two strategies: 1. Bukkit PlayerProfile API (Spigot 1.18.1+): decodes base64 → skin URL → setOwnerProfile. Looked up
- * via the SkullMeta interface (not CraftMetaSkull) to avoid IllegalAccessException from Paper's module restrictions on
- * unexported CraftBukkit packages. 2. GameProfile field reflection (1.16.5–1.17.x fallback): direct private-field set.
- * coerceProfile wraps GameProfile into ResolvableProfile on 1.20.5+ Paper where the field type changed.
+ * Three strategies, in order: 1. Paper's profile API: the textures value goes in as a {@code ProfileProperty}, exactly
+ * as given, with no URL to parse. 2. Bukkit PlayerProfile API (Spigot 1.18.1+): decodes base64 → skin URL →
+ * setOwnerProfile. Looked up via the SkullMeta interface (not CraftMetaSkull) to avoid IllegalAccessException from
+ * Paper's module restrictions on unexported CraftBukkit packages. 3. GameProfile field reflection (1.16.5–1.17.x
+ * fallback): direct private-field set. coerceProfile wraps GameProfile into ResolvableProfile on 1.20.5+ Paper where
+ * the field type changed.
+ *
+ * <p>
+ * The third path links against authlib, whose {@code GameProfile} became a record on Paper 26.3
+ * ({@code getProperties()} is gone). It used to be reached for every real player skin, because Mojang's textures JSON
+ * is pretty-printed ({@code "url" : "..."}) and the URL parse in path 2 expected no spaces — so a menu showing a real
+ * player's head threw {@code NoSuchMethodError} and never opened. Path 1 never parses, path 2 now tolerates the
+ * spacing, and a linkage failure in path 3 surfaces as an {@link IllegalStateException} like every other failure here.
+ * </p>
  */
 final class SkullTextures {
 
@@ -29,11 +41,49 @@ final class SkullTextures {
     private SkullTextures() {
     }
 
+    private static final Pattern SKIN_URL = Pattern.compile("\"url\"\\s*:\\s*\"([^\"]+)\"");
+
     static void apply(SkullMeta meta, String base64Texture) {
+        if (applyViaPaperProfile(meta, base64Texture)) {
+            return;
+        }
         if (applyViaOwnerProfile(meta, base64Texture)) {
             return;
         }
-        applyViaGameProfileField(meta, base64Texture);
+        try {
+            applyViaGameProfileField(meta, base64Texture);
+        } catch (LinkageError incompatible) {
+            throw new IllegalStateException("No skull texture strategy works on this server version", incompatible);
+        }
+    }
+
+    /**
+     * Paper path. Builds a profile with {@code Server#createProfile}, puts the textures value on it as a
+     * {@code ProfileProperty} and hands it to {@code SkullMeta#setPlayerProfile}. All by reflection: the core compiles
+     * against the Spigot API, where none of these exist.
+     */
+    private static boolean applyViaPaperProfile(SkullMeta meta, String base64Texture) {
+        try {
+            Class<?> paperProfileClass = Class.forName("com.destroystokyo.paper.profile.PlayerProfile");
+            Class<?> propertyClass = Class.forName("com.destroystokyo.paper.profile.ProfileProperty");
+            Method setPlayerProfile = SkullMeta.class.getMethod("setPlayerProfile", paperProfileClass);
+
+            Object server = Bukkit.getServer();
+            Object profile = server.getClass().getMethod("createProfile", UUID.class, String.class).invoke(server,
+                    UUID.randomUUID(), "");
+            if (!paperProfileClass.isInstance(profile)) {
+                return false;
+            }
+            Object property = propertyClass.getConstructor(String.class, String.class).newInstance("textures",
+                    base64Texture);
+            paperProfileClass.getMethod("setProperty", propertyClass).invoke(profile, property);
+            setPlayerProfile.invoke(meta, profile);
+            return true;
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            // Missing on Spigot, or a server (MockBukkit) that declares the API and does not implement it: the next
+            // strategy gets its turn.
+            return false;
+        }
     }
 
     /**
@@ -92,18 +142,15 @@ final class SkullTextures {
         }
     }
 
-    private static URL extractSkinUrl(String base64Texture) {
+    /**
+     * @return the skin URL in a textures value, or null. Mojang's own values are pretty-printed
+     *         ({@code "url" : "http://..."}); head databases write them compact. Both parse.
+     */
+    static URL extractSkinUrl(String base64Texture) {
         try {
-            String json = new String(Base64.getDecoder().decode(base64Texture), StandardCharsets.UTF_8);
-            int start = json.indexOf("\"url\":\"") + 7;
-            if (start < 7) {
-                return null;
-            }
-            int end = json.indexOf('"', start);
-            if (end < 0) {
-                return null;
-            }
-            return new URL(json.substring(start, end));
+            String json = new String(Base64.getDecoder().decode(base64Texture.trim()), StandardCharsets.UTF_8);
+            Matcher matcher = SKIN_URL.matcher(json);
+            return matcher.find() ? new URL(matcher.group(1)) : null;
         } catch (Exception e) {
             return null;
         }
