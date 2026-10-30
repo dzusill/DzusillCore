@@ -53,9 +53,42 @@ public final class ArgumentParser {
                 }
                 continue;
             }
-            values.put(spec.name(), spec.type().parse(context, args[index]));
+            try {
+                values.put(spec.name(), spec.type().parse(context, args[index]));
+            } catch (CommandException failure) {
+                throw contextualise(failure, context, args, offset, i);
+            }
         }
         return new Arguments(values);
+    }
+
+    /**
+     * Puts the command back in front of an argument type's own usage complaint.
+     *
+     * <p>
+     * An {@link ArgumentType} sees one token and nothing else — not the label, not the subcommand path, not the other
+     * arguments — so the most it can honestly say is what <em>it</em> wanted: {@code <material>}, or the list of enum
+     * constants. Left alone that reached the player as "Usage: &lt;material&gt;", which names neither the command they
+     * got wrong nor the arguments around it. The parser is the first place up the stack that knows all three, so this
+     * is where the fragment is rebuilt into a whole line.
+     * </p>
+     *
+     * <p>
+     * The type's fragment replaces that one argument rather than the whole usage, which is what keeps the useful part
+     * of what it said: {@code /oberonsell migrate <prices|playerdata>} rather than the blander
+     * {@code /oberonsell migrate <target>}. A failure carrying any other message key is passed through untouched — a
+     * type with something more specific to say than "wrong shape" gets to say it.
+     * </p>
+     */
+    private CommandException contextualise(CommandException failure, CommandContext context, String[] args, int offset,
+            int failed) {
+        if (!Messages.INVALID_USAGE.equals(failure.messageKey())) {
+            return failure;
+        }
+        String command = commandOf(context, args, offset);
+        String hint = failure.placeholder().get("usage");
+        return new CommandException(Messages.INVALID_USAGE,
+                Placeholder.of("usage", (command + " " + usage(failed, hint)).trim()).and("cmd", command));
     }
 
     /**
@@ -92,8 +125,23 @@ public final class ArgumentParser {
      * @return a usage fragment such as {@code <name> [target]} built from the specs
      */
     public String usage() {
+        return usage(-1, null);
+    }
+
+    /**
+     * @param highlight
+     *            index of the argument to render as {@code replacement} instead of its declared name, or {@code -1}
+     * @param replacement
+     *            the failing type's own fragment, so the line shows what that argument actually accepts
+     */
+    private String usage(int highlight, String replacement) {
         StringBuilder builder = new StringBuilder();
-        for (Spec spec : specs) {
+        for (int i = 0; i < specs.size(); i++) {
+            if (i == highlight && replacement != null && !replacement.isBlank()) {
+                builder.append(' ').append(replacement);
+                continue;
+            }
+            Spec spec = specs.get(i);
             builder.append(spec.required() ? " <" + spec.name() + ">" : " [" + spec.name() + "]");
         }
         return builder.toString().trim();

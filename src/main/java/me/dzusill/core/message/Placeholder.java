@@ -96,6 +96,19 @@ public final class Placeholder {
         return this;
     }
 
+    /**
+     * @return the substitution set for {@code key}, or {@code null} if there is none
+     *
+     *         <p>
+     *         For code that receives a placeholder set and needs to rebuild part of it rather than only apply it — the
+     *         argument parser reads back the {@code usage} fragment an argument type supplied so it can put the command
+     *         in front of it.
+     *         </p>
+     */
+    public String get(String key) {
+        return values.get(key);
+    }
+
     public boolean isEmpty() {
         return values.isEmpty();
     }
