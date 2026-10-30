@@ -97,8 +97,9 @@ public final class DialogModule extends AbstractModule {
         if (sweepTask != null)
             sweepTask.cancel();
         if (dialogs != null) {
-            // Resolves every in-flight handler as cancelled rather than leaving callers waiting forever.
-            dialogs.reload();
+            // Stops listening for responses on the shared sink, and resolves every in-flight handler as cancelled
+            // rather than leaving callers waiting forever.
+            dialogs.shutdown();
         }
         if (ownedPrompts != null)
             ownedPrompts.shutdown();

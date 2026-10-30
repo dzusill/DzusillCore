@@ -28,8 +28,14 @@ import me.dzusill.core.service.Reloadable;
  * Registered once at startup and never re-registered - {@code ServiceRegistry} rejects duplicates and offers no
  * unregister - so reconfiguration mutates this instance through {@link #reload()} instead.
  * </p>
+ *
+ * <p>
+ * One of these exists <em>per plugin</em>, each with its own {@link PendingDialogs}, while the rendering backend is a
+ * single shared instance. Responses therefore arrive through {@link DialogSinks}, which offers each one to every
+ * registry until the one that minted the token claims it - see that class for what happens without it.
+ * </p>
  */
-public final class RoutingDialogService implements DialogService, DialogCallbackSink, Reloadable {
+public final class RoutingDialogService implements DialogService, DialogCallbackSink, ClaimingSink, Reloadable {
 
     /** A forged-click flood is cheap to send and cheap to drop; this bounds the log noise it can cause. */
     private static final int MAX_CLICKS_PER_SECOND = 10;
@@ -57,6 +63,9 @@ public final class RoutingDialogService implements DialogService, DialogCallback
         this.scheduler = scheduler;
         this.pending = pending;
         this.fallback = fallback == null ? DialogFallback.none() : fallback;
+        // Registered here rather than when a backend is resolved: another plugin may have attached the backend long
+        // before this one shows its first dialog, and responses to our tokens have to reach us from that moment on.
+        DialogSinks.shared().register(this);
     }
 
     // -------------------------------------------------------------------------
@@ -84,7 +93,10 @@ public final class RoutingDialogService implements DialogService, DialogCallback
             if (registration == null)
                 return null;
             DialogBackend found = registration.getProvider();
-            found.attach(this);
+            // The shared multiplexer, never `this`: a backend holds one sink, and this same instance is resolved by
+            // every plugin on the server. Attaching ourselves would silently steal every other plugin's callbacks -
+            // and the last plugin to resolve it would just as silently steal ours back.
+            found.attach(DialogSinks.shared());
             plugin.getLogger().info("Dialog backend: " + found.describe());
             return found;
         } catch (Exception | LinkageError failure) {
@@ -282,33 +294,56 @@ public final class RoutingDialogService implements DialogService, DialogCallback
             plugin.getLogger().warning("Dropping dialog responses from " + playerId + ": too many in one second");
             return;
         }
-
-        Optional<PendingDialogs.Pending> claimed = pending.claim(token, playerId);
-        if (claimed.isEmpty()) {
+        if (!trySubmit(playerId, token, buttonId, values)) {
             // Unknown, expired, already used, or forged on someone else's behalf. Never act on it - but say so.
             // This used to be logged at FINE, which meant a button that did nothing produced no evidence at all.
             plugin.getLogger().warning("Ignoring a dialog response from " + playerId
                     + ": its token is unknown, expired or already used. If a button appears to do nothing, this is"
                     + " why - the dialog it belongs to is no longer pending.");
-            return;
         }
-
-        Player player = Bukkit.getPlayer(playerId);
-        if (player == null)
-            return;
-        DialogValues safe = values == null ? DialogValues.empty() : values;
-        dispatch(player, () -> claimed.get().handler().onSubmit(buttonId == null ? "" : buttonId, safe));
     }
 
     @Override
     public void onCancelled(UUID playerId, String token) {
-        pending.cancel(token).ifPresent(cancelled -> {
-            Player player = Bukkit.getPlayer(playerId);
+        tryCancel(playerId, token);
+    }
+
+    // -------------------------------------------------------------------------
+    // ClaimingSink - the same two operations, but reporting whether the token was ours
+    // -------------------------------------------------------------------------
+
+    /**
+     * A response is offered to every registry on the server (see {@link DialogSinks}), so "I do not know this token" is
+     * an ordinary answer here rather than a problem: it means the dialog belongs to another plugin.
+     */
+    @Override
+    public boolean trySubmit(UUID playerId, String token, String buttonId, DialogValues values) {
+        if (playerId == null || token == null)
+            return false;
+
+        Optional<PendingDialogs.Pending> claimed = pending.claim(token, playerId);
+        if (claimed.isEmpty())
+            return false;
+
+        Player player = Bukkit.getPlayer(playerId);
+        if (player == null)
+            return true; // ours, and consumed; there is simply nobody left to dispatch to
+        DialogValues safe = values == null ? DialogValues.empty() : values;
+        dispatch(player, () -> claimed.get().handler().onSubmit(buttonId == null ? "" : buttonId, safe));
+        return true;
+    }
+
+    @Override
+    public boolean tryCancel(UUID playerId, String token) {
+        Optional<PendingDialogs.Pending> cancelled = pending.cancel(token);
+        cancelled.ifPresent(entry -> {
+            Player player = playerId == null ? null : Bukkit.getPlayer(playerId);
             if (player != null)
-                dispatch(player, cancelled.handler()::onCancel);
+                dispatch(player, entry.handler()::onCancel);
             else
-                cancelled.handler().onCancel();
+                entry.handler().onCancel();
         });
+        return cancelled.isPresent();
     }
 
     // -------------------------------------------------------------------------
@@ -322,6 +357,21 @@ public final class RoutingDialogService implements DialogService, DialogCallback
         for (PendingDialogs.Pending cancelled : pending.cancelAllFor(playerId))
             cancelled.handler().onCancel();
         clickWindows.remove(playerId);
+        DialogSinks.shared().forget(playerId);
+    }
+
+    /**
+     * Stops listening for responses and resolves everything in flight. Call on disable.
+     *
+     * <p>
+     * The registry {@link DialogSinks} keeps is weak, so skipping this leaks nothing permanently - but until the next
+     * collection a disabled plugin would still be offered responses, and its handlers would run against a plugin that
+     * is no longer there.
+     * </p>
+     */
+    public void shutdown() {
+        DialogSinks.shared().unregister(this);
+        reload();
     }
 
     /**
