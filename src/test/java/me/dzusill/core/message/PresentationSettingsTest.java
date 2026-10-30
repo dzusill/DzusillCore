@@ -123,6 +123,91 @@ class PresentationSettingsTest {
         assertEquals(MessageChannel.BOTH, settings.resolve("TELEPORT.HERE", MessageCategory.TOGGLE).channel());
     }
 
+    /**
+     * A message with no section of its own is overridden by naming it directly, one level under {@code Overrides}.
+     *
+     * <p>
+     * Worth pinning because the shipped examples are all two-level ({@code sell: gui_nothing:}), which reads as though
+     * a parent section were part of the syntax. It is not: overrides are keyed by the message's own
+     * {@code messages.yml} path, so a framework message like {@code player-not-found}, which has no parent, is written
+     * flat — hyphens and all.
+     * </p>
+     */
+    @Test
+    void aMessageWithNoSectionIsOverriddenByNamingItDirectly() {
+        PresentationSettings settings = PresentationSettings.from(parse("""
+                Presentation:
+                  Categories:
+                    ERROR:
+                      Channel: BOTH
+                  Overrides:
+                    player-not-found:
+                      Channel: ACTION_BAR
+                    invalid-usage:
+                      Sound:
+                        Enabled: false
+                """));
+
+        assertEquals(MessageChannel.ACTION_BAR, settings.resolve("player-not-found", MessageCategory.ERROR).channel());
+        assertTrue(settings.resolve("invalid-usage", MessageCategory.ERROR).sound().silent());
+        // The category still decides everything it did not name.
+        assertEquals(MessageChannel.BOTH, settings.resolve("no-permission", MessageCategory.ERROR).channel());
+    }
+
+    /**
+     * A flat key and a sectioned one live in the same map, so one file may mix them.
+     *
+     * <p>
+     * The map is keyed by the full dotted path {@code getKeys(true)} produces, which is exactly the message key — so
+     * there is nothing to choose between the two forms and no reason a config cannot use both.
+     * </p>
+     */
+    @Test
+    void flatAndSectionedOverridesCoexist() {
+        PresentationSettings settings = PresentationSettings.from(parse("""
+                Presentation:
+                  Overrides:
+                    player-not-found:
+                      Channel: NONE
+                    sell:
+                      summary:
+                        Channel: ACTION_BAR
+                    sellaxe.nothing:
+                      Channel: BOTH
+                """));
+
+        assertEquals(MessageChannel.NONE, settings.resolve("player-not-found", null).channel());
+        assertEquals(MessageChannel.ACTION_BAR, settings.resolve("sell.summary", null).channel());
+        // The dotted one-line spelling the shipped config uses in its example. Snakeyaml hands it over as a
+        // literal key with a dot in it, and Bukkit splits that back into sections on the way in — so it is the
+        // same entry as the indented form above, not a second syntax with its own rules.
+        assertEquals(MessageChannel.BOTH, settings.resolve("sellaxe.nothing", null).channel());
+    }
+
+    /**
+     * A parent section is not itself an override.
+     *
+     * <p>
+     * {@code getKeys(true)} hands back {@code sell} as well as {@code sell.summary}, and a parent that states nothing
+     * of its own must not register as an entry that silences every message under it.
+     * </p>
+     */
+    @Test
+    void aParentSectionIsNotItselfAnOverride() {
+        PresentationSettings settings = PresentationSettings.from(parse("""
+                Presentation:
+                  Categories:
+                    ERROR:
+                      Channel: BOTH
+                  Overrides:
+                    sell:
+                      summary:
+                        Channel: ACTION_BAR
+                """));
+
+        assertEquals(MessageChannel.BOTH, settings.resolve("sell", MessageCategory.ERROR).channel());
+    }
+
     @Test
     void aChannelNameNobodyKnowsFallsBackRatherThanThrowing() {
         PresentationSettings settings = PresentationSettings.from(parse("""
